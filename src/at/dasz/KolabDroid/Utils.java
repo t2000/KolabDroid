@@ -42,7 +42,8 @@ public final class Utils
 	 */
 	private static final SimpleDateFormat	UTC_DATE_FORMAT	= new SimpleDateFormat(
 																	"yyyy-MM-dd'T'HH:mm:ss.SS'Z'");
-	private static final TimeZone utc = TimeZone.getTimeZone("UTC");
+	private static final TimeZone			utc				= TimeZone
+																	.getTimeZone("UTC");
 
 	public static String toUtc(Date date)
 	{
@@ -50,46 +51,60 @@ public final class Utils
 		final String milliformat = UTC_DATE_FORMAT.format(date);
 		return milliformat;
 	}
-	
-	public static final void setXmlElementValue(Document xml, Element parent, String name, String value)
-	{		
-		Element e = getOrCreateXmlElement(xml, parent, name);
-		// Delete old text nodes
-		NodeList nl = e.getChildNodes();
-		for(int i=0;i<nl.getLength();i++) 
+
+	public static final void setXmlElementValue(Document xml, Element parent,
+			String name, String value)
+	{
+		if (value == null || "".equals(value))
 		{
-			e.removeChild(nl.item(i));
+			deleteXmlElements(parent, name);
 		}
-		// add new text node
-		if(value == null) value = "";
-		Text t = xml.createTextNode(value);
-		e.appendChild(t);
+		else
+		{
+			Element e = getOrCreateXmlElement(xml, parent, name);
+			// Delete old text nodes
+			NodeList nl = e.getChildNodes();
+			for (int i = 0; i < nl.getLength(); i++)
+			{
+				e.removeChild(nl.item(i));
+			}
+			// add new text node
+			if (value == null) value = "";
+			Text t = xml.createTextNode(value);
+			e.appendChild(t);
+		}
 	}
 
-	public static final void addXmlElementValue(Document xml, Element parent, String name, String value)
-	{		
-		Element e = xml.createElement(name); 
+	public static final void addXmlElementValue(Document xml, Element parent,
+			String name, String value)
+	{
+		Element e = xml.createElement(name);
 		parent.appendChild(e);
 		// add new text node
 		Text t = xml.createTextNode(value);
 		e.appendChild(t);
 	}
-	
-	public static final void setXmlAttributeValue(Document xml, Element parent, String name, String value)
-	{		
+
+	public static final void setXmlAttributeValue(Document xml, Element parent,
+			String name, String value)
+	{
 		Attr a = xml.createAttribute(name);
 		a.setValue(value);
 		parent.getAttributes().setNamedItem(a);
 	}
-	
-	public static final Element getOrCreateXmlElement(Document xml, Element parent, String name)
+
+	public static final Element getOrCreateXmlElement(Document xml,
+			Element parent, String name)
 	{
 		NodeList nl = parent.getElementsByTagName(name);
-		if(nl.getLength() == 0) {
-			Element e = xml.createElement(name); 
+		if (nl.getLength() == 0)
+		{
+			Element e = xml.createElement(name);
 			parent.appendChild(e);
 			return e;
-		} else {
+		}
+		else
+		{
 			return (Element) nl.item(0);
 		}
 	}
@@ -97,9 +112,12 @@ public final class Utils
 	public static final Element getXmlElement(Element parent, String name)
 	{
 		NodeList nl = parent.getElementsByTagName(name);
-		if(nl.getLength() == 0) {
+		if (nl.getLength() == 0)
+		{
 			return null;
-		} else {
+		}
+		else
+		{
 			return (Element) nl.item(0);
 		}
 	}
@@ -108,21 +126,18 @@ public final class Utils
 	{
 		return parent.getElementsByTagName(name);
 	}
-	
+
 	public static final String getXmlElementString(Element parent, String name)
-	{		
+	{
 		Element e = getXmlElement(parent, name);
 		return getXmlElementString(e);
 	}
-	
+
 	public static final String getXmlElementString(Element e)
-	{		
-		if(e == null) return null;
+	{
+		if (e == null) return null;
 		NodeList nl = e.getChildNodes();
-		if(nl.getLength() > 0) 
-		{
-			return nl.item(0).getNodeValue();
-		}
+		if (nl.getLength() > 0) { return nl.item(0).getNodeValue(); }
 		return null;
 	}
 
@@ -132,14 +147,17 @@ public final class Utils
 	}
 
 	public static final Time getXmlElementTime(Element parent, String name)
-	{		
+	{
 		String value = getXmlElementString(parent, name);
-		if(value == null || "".equals(value)) return null;
+		if (value == null || "".equals(value)) return null;
 		Time t = new Time();
 		t.switchTimezone("UTC");
-		try {
+		try
+		{
 			t.parse3339(value);
-		} catch(TimeFormatException tfe) {
+		}
+		catch (TimeFormatException tfe)
+		{
 			Log.e("sync", "Unable to parse DateTime " + value);
 			tfe.printStackTrace();
 			return null;
@@ -148,36 +166,42 @@ public final class Utils
 		return t;
 	}
 
-	public static final int getXmlElementInt(Element parent, String name, int defaultValue)
-	{		
+	public static final int getXmlElementInt(Element parent, String name,
+			int defaultValue)
+	{
 		String value = getXmlElementString(parent, name);
-		if(value == null || "".equals(value)) return defaultValue;
-		try {
+		if (value == null || "".equals(value)) return defaultValue;
+		try
+		{
 			return Integer.parseInt(value);
-		} catch(TimeFormatException tfe) {
+		}
+		catch (TimeFormatException tfe)
+		{
 			Log.e("sync", "Unable to parse DateTime " + value);
 			tfe.printStackTrace();
 			return defaultValue;
 		}
 	}
-	
+
 	public static final void deleteXmlElements(Element parent, String name)
 	{
 		NodeList nl = parent.getElementsByTagName(name);
-		for(int i=0;i<nl.getLength();i++)
+		for (int i = 0; i < nl.getLength(); i++)
 		{
-			parent.removeChild(nl.item(i));			
+			parent.removeChild(nl.item(i));
 		}
 	}
-	
-	public final static Document getDocument(InputStream xmlinput) throws ParserConfigurationException, SAXException, IOException
+
+	public final static Document getDocument(InputStream xmlinput)
+			throws ParserConfigurationException, SAXException, IOException
 	{
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 		DocumentBuilder db = dbf.newDocumentBuilder();
 		return db.parse(xmlinput);
 	}
-	
-	public final static Document newDocument(String rootName) throws ParserConfigurationException
+
+	public final static Document newDocument(String rootName)
+			throws ParserConfigurationException
 	{
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 		DocumentBuilder db = dbf.newDocumentBuilder();
@@ -187,9 +211,9 @@ public final class Utils
 		a.setValue("1.0");
 		root.getAttributes().setNamedItem(a);
 		xml.appendChild(root);
-		return xml;		
+		return xml;
 	}
-	
+
 	public final static String getXml(Node node)
 	{
 		// http://groups.google.com/group/android-developers/browse_thread/thread/2cc84c1bc8a6b477/5edb01c0721081b0
@@ -200,7 +224,7 @@ public final class Utils
 		if (node instanceof Document)
 		{
 			buffer.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-			buffer.append(getXml(((Document)node).getDocumentElement()));
+			buffer.append(getXml(((Document) node).getDocumentElement()));
 		}
 		else if (node instanceof Element)
 		{

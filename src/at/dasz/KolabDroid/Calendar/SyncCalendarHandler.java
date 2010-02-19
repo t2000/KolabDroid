@@ -144,33 +144,54 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 
 			int daynumber = Utils.getXmlElementInt(recurrence, "daynumber", 0);
 			NodeList days = Utils.getXmlElements(recurrence, "day");
-			int length = days.getLength();
-			if (length > 0)
+			int daysLength = days.getLength();
+			if (daysLength > 0)
 			{
 				sb.append(";BYDAY=");
-				for (int i = 0; i < length; i++)
+				for (int i = 0; i < daysLength; i++)
 				{
 					if (daynumber > 1) sb.append(daynumber);
 
 					Element day = (Element) days.item(i);
 					String d = Utils.getXmlElementString(day);
 					if ("monday".equals(d)) sb.append("MO");
-					if ("tuesday".equals(d)) sb.append("TU");
-					if ("wednesday".equals(d)) sb.append("WE");
-					if ("thursday".equals(d)) sb.append("TH");
-					if ("friday".equals(d)) sb.append("FR");
-					if ("saturday".equals(d)) sb.append("SA");
-					if ("sunday".equals(d)) sb.append("SU");
+					else if ("tuesday".equals(d)) sb.append("TU");
+					else if ("wednesday".equals(d)) sb.append("WE");
+					else if ("thursday".equals(d)) sb.append("TH");
+					else if ("friday".equals(d)) sb.append("FR");
+					else if ("saturday".equals(d)) sb.append("SA");
+					else if ("sunday".equals(d)) sb.append("SU");
 
-					if ((i + 1) < length) sb.append(",");
+					if ((i + 1) < daysLength) sb.append(",");
+				}
+
+				if ("YEARLY".equals(cycle))
+				{
+					String month = Utils.getXmlElementString(recurrence,
+							"month");
+					if (month != null && !"".equals(month))
+					{
+						sb.append(";BYMONTH=");
+						if ("january".equals(month)) sb.append("1");
+						else if ("february".equals(month)) sb.append("2");
+						else if ("march".equals(month)) sb.append("3");
+						else if ("april".equals(month)) sb.append("4");
+						else if ("may".equals(month)) sb.append("5");
+						else if ("june".equals(month)) sb.append("6");
+						else if ("july".equals(month)) sb.append("7");
+						else if ("august".equals(month)) sb.append("8");
+						else if ("september".equals(month)) sb.append("9");
+						else if ("october".equals(month)) sb.append("10");
+						else if ("november".equals(month)) sb.append("11");
+						else if ("december".equals(month)) sb.append("12");
+					}
 				}
 			}
-
-			if (daynumber != 0 && "MONTHLY".equals(cycle))
+			else if (daynumber != 0 && "MONTHLY".equals(cycle))
 			{
 				sb.append(";BYMONTHDAY=" + daynumber);
 			}
-			
+
 			int interval = Utils.getXmlElementInt(recurrence, "interval", 0);
 			if (interval > 1)
 			{
@@ -215,20 +236,24 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 
 	}
 
-	private final static java.util.regex.Pattern	regFREQ			= java.util.regex.Pattern
-																			.compile("FREQ=(\\w*);.*");
+	private final static java.util.regex.Pattern	regFREQ				= java.util.regex.Pattern
+																				.compile("FREQ=(\\w*);.*");
 	// private final static java.util.regex.Pattern regUntil =
 	// java.util.regex.Pattern
 	// .compile(";UNTIL=(\\w*)");
 	// private final static java.util.regex.Pattern regWKST =
 	// java.util.regex.Pattern
 	// .compile(";WKST=(\\w*)");
-	private final static java.util.regex.Pattern	regBYDAY		= java.util.regex.Pattern
-																			.compile(".*;BYDAY=(.*);?");
-	private final static java.util.regex.Pattern	regINTERVAL		= java.util.regex.Pattern
-																			.compile(".*;INTERVAL=(\\d*);?");
-	private final static java.util.regex.Pattern	regBYDAYWeekDay	= java.util.regex.Pattern
-																			.compile("(?:([+-]?)([0-9]*)([A-Z]{2}),?)");
+	private final static java.util.regex.Pattern	regBYDAY			= java.util.regex.Pattern
+																				.compile(".*;BYDAY=([\\+\\-\\,0-9A-Z]*);?.*");
+	private final static java.util.regex.Pattern	regBYDAYSubPattern	= java.util.regex.Pattern
+																				.compile("(?:([+-]?)([\\d]*)([A-Z]{2}),?)");
+	private final static java.util.regex.Pattern	regINTERVAL			= java.util.regex.Pattern
+																				.compile(".*;INTERVAL=(\\d*);?.*");
+	private final static java.util.regex.Pattern	regBYMONTHDAY		= java.util.regex.Pattern
+																				.compile(".*;BYMONTHDAY=(\\d*);?.*");
+	private final static java.util.regex.Pattern	regBYMONTH			= java.util.regex.Pattern
+																				.compile(".*;BYMONTH=(\\d*);?.*");
 
 	private void writeXml(Document xml, CalendarEntry source,
 			final Date lastChanged)
@@ -263,12 +288,12 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 						.toLowerCase());
 			}
 
-			result = regBYDAY.matcher(rrule);
 			String daynumber = "";
+			result = regBYDAY.matcher(rrule);
 			if (result.matches())
 			{
 				final String group = result.group(1);
-				Matcher grpResult = regBYDAYWeekDay.matcher(group);
+				Matcher grpResult = regBYDAYSubPattern.matcher(group);
 				while (grpResult.find())
 				{
 					String plusMinus = grpResult.group(1);
@@ -287,16 +312,41 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 					String g = grpResult.group(3);
 					String day = "";
 					if ("MO".equals(g)) day = "monday";
-					if ("TU".equals(g)) day = "tuesday";
-					if ("WE".equals(g)) day = "wednesday";
-					if ("TH".equals(g)) day = "thursday";
-					if ("FR".equals(g)) day = "friday";
-					if ("SA".equals(g)) day = "saturday";
-					if ("SU".equals(g)) day = "sunday";
-					Utils.addXmlElementValue(xml, recurrence, "day", day);
+					else if ("TU".equals(g)) day = "tuesday";
+					else if ("WE".equals(g)) day = "wednesday";
+					else if ("TH".equals(g)) day = "thursday";
+					else if ("FR".equals(g)) day = "friday";
+					else if ("SA".equals(g)) day = "saturday";
+					else if ("SU".equals(g)) day = "sunday";
+					if(!"".equals(day)) Utils.addXmlElementValue(xml, recurrence, "day", day);
 				}
 			}
+			result = regBYMONTHDAY.matcher(rrule);
+			if (result.matches())
+			{
+				daynumber = result.group(1);
+			}
 			Utils.setXmlElementValue(xml, recurrence, "daynumber", daynumber);
+
+			result = regBYMONTH.matcher(rrule);
+			String month = "";
+			if (result.matches())
+			{
+				String g = result.group(1);
+				if("1".equals(g)) month = "january";
+				else if("2".equals(g)) month = "february";
+				else if("3".equals(g)) month = "march";
+				else if("4".equals(g)) month = "april";
+				else if("5".equals(g)) month = "may";
+				else if("6".equals(g)) month = "june";
+				else if("7".equals(g)) month = "july";
+				else if("8".equals(g)) month = "august";
+				else if("9".equals(g)) month = "september";
+				else if("10".equals(g)) month = "october";
+				else if("11".equals(g)) month = "november";
+				else if("12".equals(g)) month = "december";
+			}
+			Utils.setXmlElementValue(xml, recurrence, "month", month);
 
 			result = regINTERVAL.matcher(rrule);
 			if (result.matches())
