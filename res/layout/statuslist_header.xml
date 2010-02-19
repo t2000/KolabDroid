@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="fill_parent" android:layout_height="30px">
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Header" android:textStyle="bold" android:id="@+id/headertext" android:paddingLeft="40px"></TextView>
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/headertime" android:text="Time" android:layout_marginLeft="10px"></TextView>
+</LinearLayout>

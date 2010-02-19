@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="refreshstatus">Refresh</string>
+	<string name="password">Password</string>
+	<string name="username">Username</string>
+	<string name="port">Port</string>
+	<string name="host">Host</string>
+	<string name="settings">Settings</string>
+	<string name="reset">Reset</string>
+	<string name="title">Kolab Client for Android</string>
+	<string name="app_name">Kolab Client for Android</string>
+	<string name="sync">Sync</string>
+	<string name="invalidNumberFormat">Invalid number format</string>
+	<string name="ok">OK</string>
+	<string name="usessl">Use SSL</string>
+	<string name="startsync">Start syncing</string>
+	<string name="syncfinished">Sync finished</string>
+	<string name="syncisrunning">Sync is already running</string>
+	<string name="connect_server">Connecting to IMAP server ...</string>
+	<string name="fetching_messages">Fetching IMAP headers ...</string>
+	<string name="processing_message_format">Processing message %1$d of %2$d.</string>
+	<string name="processing_item_format">Processing local item %1$d of ?.</string>
+	<string name="sync_error_format">Error while synchronizing: %1$s</string>
+	<string name="foldercontact">Contacts folder</string>
+	<string name="foldercalendar">Calendar folder</string>
+	<string name="sync_conflict">There was an edit conflict.</string>
+<string name="reset_error_format">Error while resetting: %1$s</string>
+<string name="resetisrunning">Reset is already running</string>
+<string name="delete_message_format">Deleting item %1$d.</string>
+<string name="resetting_start">Reseting local items.</string>
+<string name="reseting_finished">Reseting local items finished.</string>
+<string name="yes">Yes</string>
+<string name="no">No</string>
+<string name="really_reset">Do you really want do delete all your Calendar, Contact and Task items?</string>
+<string name="workerisrunning">A worker is running</string>
+<string name="startservice">Start Service</string>
+<string name="stopservice">Stop Service</string>
+<string name="clearlog">Clear log</string>
+</resources>

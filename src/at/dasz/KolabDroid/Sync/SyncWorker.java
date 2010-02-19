@@ -1,0 +1,305 @@
+package at.dasz.KolabDroid.Sync;
+
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.mail.FetchProfile;
+import javax.mail.Folder;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import javax.mail.Store;
+import javax.mail.Flags.Flag;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.xml.sax.SAXException;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.util.Log;
+import at.dasz.KolabDroid.R;
+import at.dasz.KolabDroid.StatusHandler;
+import at.dasz.KolabDroid.Calendar.SyncCalendarHandler;
+import at.dasz.KolabDroid.Contacts.SyncContactsHandler;
+import at.dasz.KolabDroid.Imap.ImapClient;
+import at.dasz.KolabDroid.Provider.LocalCacheProvider;
+import at.dasz.KolabDroid.Provider.StatusProvider;
+import at.dasz.KolabDroid.Settings.Settings;
+
+public class SyncWorker extends BaseWorker
+{
+
+	public SyncWorker(Context context)
+	{
+		super(context);
+	}
+
+	private static StatusEntry	status;
+
+	public static StatusEntry getStatus()
+	{
+		return status;
+	}
+
+	@Override
+	protected void runWorker()
+	{
+		setRunningMessage(R.string.syncisrunning);
+		StatusProvider statProvider = new StatusProvider(context);
+		try
+		{
+			StatusHandler.writeStatus(R.string.startsync);
+
+			Settings settings = new Settings(this.context);
+			SyncHandler handler = null;
+
+			handler = new SyncContactsHandler(this.context);
+			if (shouldProcess(handler))
+			{
+				status = handler.getStatus();
+				sync(settings, handler);
+				statProvider.saveStatusEntry(status);
+			}
+
+			if (isStopping()) return;
+
+			handler = new SyncCalendarHandler(this.context);
+			if (shouldProcess(handler))
+			{
+				status = handler.getStatus();
+				sync(settings, handler);
+				statProvider.saveStatusEntry(status);
+			}
+			status = null;
+
+			StatusHandler.writeStatus(R.string.syncfinished);
+		}
+		catch (Exception ex)
+		{
+			final String errorFormat = this.context.getResources().getString(
+					R.string.sync_error_format);
+
+			StatusHandler
+					.writeStatus(String.format(errorFormat, ex.toString()));
+
+			ex.printStackTrace();
+		}
+		finally
+		{
+			statProvider.close();
+			StatusHandler.notifySyncFinished();
+		}
+	}
+
+	private boolean shouldProcess(SyncHandler handler)
+	{
+		return handler.getDefaultFolderName() != null
+				&& !"".equals(handler.getDefaultFolderName());
+	}
+
+	private void sync(Settings settings, SyncHandler handler)
+			throws MessagingException, IOException, 
+			ParserConfigurationException
+	{
+		StatusHandler.writeStatus(R.string.connect_server);
+		Store server = null;
+		Folder sourceFolder = null;
+		try
+		{
+			Session session = ImapClient.getDefaultImapSession(settings
+					.getPort(), settings.getUseSSL());
+			server = ImapClient.openServer(session, settings.getHost(),
+					settings.getUsername(), settings.getPassword());
+
+			StatusHandler.writeStatus(R.string.fetching_messages);
+
+			// 1. retrieve list of all imap message headers
+			sourceFolder = server.getFolder(handler.getDefaultFolderName());
+			sourceFolder.open(Folder.READ_WRITE);
+			Message[] msgs = sourceFolder.getMessages();
+			FetchProfile fp = new FetchProfile();
+			fp.add(FetchProfile.Item.CONTENT_INFO);
+			fp.add("Subject");
+			fp.add("Date");
+			sourceFolder.fetch(msgs, fp);
+
+			LocalCacheProvider cache = handler.getLocalCacheProvider();
+			Set<Integer> processedEntries = new HashSet<Integer>(
+					(int) (msgs.length * 1.2));
+			final String processMessageFormat = this.context.getResources()
+					.getString(R.string.processing_message_format);
+			final StatusEntry status = handler.getStatus();
+
+			for (Message m : msgs)
+			{
+				if (isStopping()) return;
+
+				if (m.getFlags().contains(Flag.DELETED))
+				{
+					Log.d("sync", "Found deleted message, continue");
+					continue;
+				}
+
+				SyncContext sync = new SyncContext();
+				try
+				{
+					sync.setMessage(m);
+
+					StatusHandler.writeStatus(String.format(
+							processMessageFormat, status.incrementItems(),
+							msgs.length));
+
+					// 2. check message headers for changes
+					String subject = sync.getMessage().getSubject();
+					Log.d("sync", "2. Checking message " + subject);
+
+					// 5. fetch local cache entry
+					sync.setCacheEntry(cache.getEntryFromRemoteId(subject));
+
+					if (sync.getCacheEntry() == null)
+					{
+						Log.i("sync", "6. found no local entry => save");
+						status.incrementLocalNew();
+						handler.createLocalItemFromServer(sync);
+						if (sync.getCacheEntry() == null)
+						{
+							Log
+									.w(
+											"sync",
+											"createLocalItemFromServer returned a null object! See Logfile for parsing errors");
+						}
+
+					}
+					else
+					{
+						Log.d("sync",
+								"7. compare data to figure out what happened");
+						if (CacheEntry.isSame(sync.getCacheEntry(), sync
+								.getMessage()))
+						{
+							Log.d("sync", "7.a/d cur=localdb");
+							if (handler.hasLocalItem(sync))
+							{
+								Log
+										.d("sync",
+												"7.a check for local changes and upload them");
+								if (handler.hasLocalChanges(sync))
+								{
+									Log
+											.i("sync",
+													"local changes found: updating ServerItem from Local");
+									status.incrementRemoteChanged();
+									handler.updateServerItemFromLocal(session,
+											sourceFolder, sync);
+								}
+							}
+							else
+							{
+								Log
+										.i("sync",
+												"7.d entry missing => delete on server");
+								handler.deleteServerItem(sync);
+							}
+						}
+						else
+						{
+							Log
+									.d("sync",
+											"7.b/c check for local changes and \"resolve\" the conflict");
+							if (handler.hasLocalChanges(sync))
+							{
+								Log
+										.i("sync",
+												"local changes found: conflicting, updating local item from server");
+								status.incrementConflicted();
+							}
+							else
+							{
+								Log.i("sync", "no local changes found:"
+										+ " updating local item from server");
+							}
+							status.incrementLocalChanged();
+							handler.updateLocalItemFromServer(sync);
+						}
+					}
+				}
+				catch (SAXException ex)
+				{
+					Log.e("sync", ex.toString());
+				}
+				if (sync.getCacheEntry() != null)
+				{
+					Log.d("sync", "8. remember message as processed (item id="
+							+ sync.getCacheEntry().getLocalId() + ")");
+					processedEntries.add(sync.getCacheEntry().getLocalId());
+				}
+			}
+
+			// 9. for all unprocessed local items
+			// 9.a upload/delete
+			Log.d("sync", "9. process unprocessed local items");
+
+			Cursor c = handler.getAllLocalItemsCursor();
+			int currentLocalItemNo = 1;
+			try
+			{
+				final int idColIdx = handler.getIdColumnIndex(c);
+
+				final String processItemFormat = this.context.getResources()
+						.getString(R.string.processing_item_format);
+
+				while (c.moveToNext())
+				{
+					if (isStopping()) return;
+
+					int localId = c.getInt(idColIdx);
+
+					Log.d("sync", "9. processing #" + localId);
+
+					StatusHandler.writeStatus(String.format(processItemFormat,
+							currentLocalItemNo++));
+
+					if (processedEntries.contains(localId))
+					{
+						// Log.d("sync",
+						// "9.a already processed from server: skipping");
+						continue;
+					}
+
+					SyncContext sync = new SyncContext();
+					sync.setCacheEntry(cache.getEntryFromLocalId(localId));
+					if (sync.getCacheEntry() != null)
+					{
+						Log
+								.i("sync",
+										"9.b found in local cache: deleting locally");
+						status.incrementLocalDeleted();
+						handler.deleteLocalItem(sync);
+					}
+					else
+					{
+						Log
+								.i("sync",
+										"9.c not found in local cache: creating on server");
+						status.incrementRemoteNew();
+						handler.createServerItemFromLocal(session,
+								sourceFolder, sync, localId);
+					}
+				}
+			}
+			finally
+			{
+				if (c != null && !c.isClosed())
+				{
+					c.close();
+				}
+			}
+		}
+		finally
+		{
+			if (sourceFolder != null) sourceFolder.close(true);
+			if (server != null) server.close();
+		}
+	}
+}
