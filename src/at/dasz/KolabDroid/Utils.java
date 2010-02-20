@@ -27,6 +27,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
+import javax.mail.Message;
+import javax.mail.MessagingException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -281,5 +283,12 @@ public final class Utils
 		}
 
 		return buffer.toString();
+	}
+	
+	public final static Date getMailDate(Message m) throws MessagingException
+	{
+		Date dt = m.getSentDate();
+		if(dt == null) dt = m.getReceivedDate();
+		return dt;
 	}
 }

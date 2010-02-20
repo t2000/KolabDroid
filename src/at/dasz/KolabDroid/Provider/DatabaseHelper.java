@@ -29,7 +29,7 @@ import at.dasz.KolabDroid.Utils;
 public class DatabaseHelper extends SQLiteOpenHelper
 {
 	private final static String		DATABASE_NAME				= "KolabDroid.db";
-	private final static int		DATABASE_VERSION			= 3;
+	private final static int		DATABASE_VERSION			= 4;
 	
 	public final static String			COL_ID						= "_id";
 	public final static int				COL_IDX_ID					= 0;
@@ -86,7 +86,8 @@ public class DatabaseHelper extends SQLiteOpenHelper
 				StatusProvider.COL_remoteNew + " INTEGER",
 				StatusProvider.COL_localDeleted + " INTEGER",
 				StatusProvider.COL_remoteDeleted + " INTEGER",
-				StatusProvider.COL_conflicted + " INTEGER",});
+				StatusProvider.COL_conflicted + " INTEGER",
+				StatusProvider.COL_errors + " INTEGER",});
 
 		db.execSQL("CREATE TABLE " + StatusProvider.STATUS_TABLE_NAME + " (" + stat_columns
 				+ ");");

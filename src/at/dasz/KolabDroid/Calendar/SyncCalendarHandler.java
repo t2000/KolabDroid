@@ -35,6 +35,7 @@ import org.w3c.dom.NodeList;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
+import android.text.format.Time;
 import android.util.Log;
 import at.dasz.KolabDroid.Utils;
 import at.dasz.KolabDroid.Provider.LocalCacheProvider;
@@ -50,7 +51,7 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 
 	private final CalendarProvider		calendarProvider;
 	private final ContentResolver		cr;
-
+	
 	public SyncCalendarHandler(Context context)
 	{
 		super(context);
@@ -124,8 +125,14 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 		cal.setDescription(Utils.getXmlElementString(root, "body"));
 		cal.setTitle(Utils.getXmlElementString(root, "summary"));
 		cal.setEventLocation(Utils.getXmlElementString(root, "location"));
-		cal.setDtstart(Utils.getXmlElementTime(root, "start-date"));
-		cal.setDtend(Utils.getXmlElementTime(root, "end-date"));
+
+		Time start = Utils.getXmlElementTime(root, "start-date");
+		Time end = Utils.getXmlElementTime(root, "end-date");
+		
+		cal.setDtstart(start);
+		cal.setDtend(end);
+		
+		cal.setAllDay(start.hour == 0 && end.hour == 0 && start.minute == 0 && end.minute == 0 && start.second == 0 && end.second == 0);
 
 		Element recurrence = Utils.getXmlElement(root, "recurrence");
 		if (recurrence != null)
@@ -175,40 +182,23 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 
 					Element day = (Element) days.item(i);
 					String d = Utils.getXmlElementString(day);
-					if ("monday".equals(d)) sb.append("MO");
-					else if ("tuesday".equals(d)) sb.append("TU");
-					else if ("wednesday".equals(d)) sb.append("WE");
-					else if ("thursday".equals(d)) sb.append("TH");
-					else if ("friday".equals(d)) sb.append("FR");
-					else if ("saturday".equals(d)) sb.append("SA");
-					else if ("sunday".equals(d)) sb.append("SU");
+					sb.append(CalendarEntry.kolabWeekDayToWeekDay(d));
 
 					if ((i + 1) < daysLength) sb.append(",");
 				}
 
-				if ("YEARLY".equals(cycle))
+				if (CalendarEntry.YEARLY.equals(cycle))
 				{
 					String month = Utils.getXmlElementString(recurrence,
 							"month");
 					if (month != null && !"".equals(month))
 					{
 						sb.append(";BYMONTH=");
-						if ("january".equals(month)) sb.append("1");
-						else if ("february".equals(month)) sb.append("2");
-						else if ("march".equals(month)) sb.append("3");
-						else if ("april".equals(month)) sb.append("4");
-						else if ("may".equals(month)) sb.append("5");
-						else if ("june".equals(month)) sb.append("6");
-						else if ("july".equals(month)) sb.append("7");
-						else if ("august".equals(month)) sb.append("8");
-						else if ("september".equals(month)) sb.append("9");
-						else if ("october".equals(month)) sb.append("10");
-						else if ("november".equals(month)) sb.append("11");
-						else if ("december".equals(month)) sb.append("12");
+						sb.append(CalendarEntry.kolabMonthToMonth(month));
 					}
 				}
 			}
-			else if (daynumber != 0 && "MONTHLY".equals(cycle))
+			else if (daynumber != 0 && CalendarEntry.MONTHLY.equals(cycle))
 			{
 				sb.append(";BYMONTHDAY=" + daynumber);
 			}
@@ -301,18 +291,28 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 
 			Matcher result;
 
+			// /////////// Frequency /////////////
 			result = regFREQ.matcher(rrule);
+			String cycle = "";
 			if (result.matches())
 			{
-				String f = result.group(1);
-				Utils.setXmlAttributeValue(xml, recurrence, "cycle", f
+				cycle = result.group(1);
+				Utils.setXmlAttributeValue(xml, recurrence, "cycle", cycle
 						.toLowerCase());
 			}
 
+			// /////////// weekday recurrence /////////////
 			String daynumber = "";
 			result = regBYDAY.matcher(rrule);
 			if (result.matches())
 			{
+				if (CalendarEntry.MONTHLY.equals(cycle)
+						|| CalendarEntry.YEARLY.equals(cycle))
+				{
+					Utils.setXmlAttributeValue(xml, recurrence, "type",
+							"weekday");
+				}
+
 				final String group = result.group(1);
 				Matcher grpResult = regBYDAYSubPattern.matcher(group);
 				while (grpResult.find())
@@ -330,45 +330,61 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 							daynumber = d;
 						}
 					}
-					String g = grpResult.group(3);
-					String day = "";
-					if ("MO".equals(g)) day = "monday";
-					else if ("TU".equals(g)) day = "tuesday";
-					else if ("WE".equals(g)) day = "wednesday";
-					else if ("TH".equals(g)) day = "thursday";
-					else if ("FR".equals(g)) day = "friday";
-					else if ("SA".equals(g)) day = "saturday";
-					else if ("SU".equals(g)) day = "sunday";
-					if(!"".equals(day)) Utils.addXmlElementValue(xml, recurrence, "day", day);
+					String day = CalendarEntry.weekDayToKolabWeekDay(grpResult
+							.group(3));
+					if (!"".equals(day)) Utils.addXmlElementValue(xml,
+							recurrence, "day", day);
 				}
 			}
+			// Not a weekday recurrence - must be daynumber or monthday
+			if ("".equals(daynumber))
+			{
+				if (CalendarEntry.MONTHLY.equals(cycle))
+				{
+					Utils.setXmlAttributeValue(xml, recurrence, "type",
+							"daynumber");
+				}
+				if (CalendarEntry.YEARLY.equals(cycle))
+				{
+					Utils.setXmlAttributeValue(xml, recurrence, "type",
+							"monthday");
+				}
+			}
+
+			// /////////// Monthday /////////////
 			result = regBYMONTHDAY.matcher(rrule);
 			if (result.matches())
 			{
 				daynumber = result.group(1);
 			}
+
+			// If daynumber is empty, get the daynumber from startdate for
+			// MONTHLY and YEARLY recurrences
+			if ("".equals(daynumber)
+					&& (CalendarEntry.MONTHLY.equals(cycle) || CalendarEntry.YEARLY
+							.equals(cycle)))
+			{
+				daynumber = Integer.toString(source.getDtstart().monthDay);
+			}
+
 			Utils.setXmlElementValue(xml, recurrence, "daynumber", daynumber);
 
+			// /////////// Month /////////////
 			result = regBYMONTH.matcher(rrule);
 			String month = "";
 			if (result.matches())
 			{
-				String g = result.group(1);
-				if("1".equals(g)) month = "january";
-				else if("2".equals(g)) month = "february";
-				else if("3".equals(g)) month = "march";
-				else if("4".equals(g)) month = "april";
-				else if("5".equals(g)) month = "may";
-				else if("6".equals(g)) month = "june";
-				else if("7".equals(g)) month = "july";
-				else if("8".equals(g)) month = "august";
-				else if("9".equals(g)) month = "september";
-				else if("10".equals(g)) month = "october";
-				else if("11".equals(g)) month = "november";
-				else if("12".equals(g)) month = "december";
+				month = CalendarEntry.monthToKolabMonth(result.group(1));
+			}
+			// Get month only for YEARLY recurrences from startdate
+			if (CalendarEntry.YEARLY.equals(cycle) && "".equals(month))
+			{
+				month = CalendarEntry.monthToKolabMonth(Integer.toString(source
+						.getDtstart().month + 1)); // 0-11
 			}
 			Utils.setXmlElementValue(xml, recurrence, "month", month);
 
+			// /////////// Interval /////////////
 			result = regINTERVAL.matcher(rrule);
 			if (result.matches())
 			{
@@ -376,8 +392,7 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 				Utils.setXmlElementValue(xml, recurrence, "interval", f);
 			}
 
-			// Android does not know until
-
+			// TODO: Android does not know until?
 		}
 	}
 
@@ -424,11 +439,11 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 		sb.append("\n");
 
 		sb.append("Start: ");
-		sb.append(cal.getDtstart().format("%c"));
+		sb.append(cal.getDtstart().format("%c")); // TODO: Change format for allDay events
 		sb.append("\n");
 
 		sb.append("End: ");
-		sb.append(cal.getDtend().format("%c"));
+		sb.append(cal.getDtend().format("%c"));// TODO: Change format for allDay events
 		sb.append("\n");
 
 		sb.append("Recurrence: ");

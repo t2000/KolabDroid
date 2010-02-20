@@ -46,6 +46,7 @@ public class StatusEntry
 	private int		remoteDeleted;
 	
 	private int		conflicted;
+	private int		errors;
 	
 	public StatusEntry()
 	{
@@ -72,6 +73,7 @@ public class StatusEntry
 		setRemoteDeleted(c.getInt(StatusProvider.COL_IDX_remoteDeleted));
 		
 		setConflicted(c.getInt(StatusProvider.COL_IDX_conflicted));
+		setErrors(c.getInt(StatusProvider.COL_IDX_errors));
 	}
 	
 	public ContentValues toContentValues()
@@ -95,6 +97,7 @@ public class StatusEntry
 		result.put(StatusProvider.COL_remoteDeleted, getRemoteDeleted());
 		
 		result.put(StatusProvider.COL_conflicted, getConflicted());
+		result.put(StatusProvider.COL_errors, getErrors());
 
 		return result;
 	}
@@ -242,5 +245,20 @@ public class StatusEntry
 	public int incrementConflicted()
 	{
 		return ++conflicted;
+	}
+	
+	public int getErrors()
+	{
+		return errors;
+	}
+
+	public void setErrors(int errors)
+	{
+		this.errors = errors;
+	}
+
+	public int incrementErrors()
+	{
+		return ++errors;
 	}
 }

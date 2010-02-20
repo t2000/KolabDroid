@@ -33,7 +33,8 @@
 <string name="no">No</string>
 <string name="really_reset">Do you really want do delete all your Calendar, Contact and Task items?</string>
 <string name="workerisrunning">A worker is running</string>
-<string name="startservice">Start Service</string>
-<string name="stopservice">Stop Service</string>
+
+<string name="stopsync">Stop sync</string>
 <string name="clearlog">Clear log</string>
+<string name="syncaborted">Sync aborted</string>
 </resources>

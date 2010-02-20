@@ -91,14 +91,14 @@ public class Main extends Activity implements MainActivity {
     private final static int MENU_SETTINGS = 1;
     private final static int MENU_RESET = 2;
     private final static int MENU_REFRESH = 3;
-    private final static int MENU_STOP_SERVICE = 5;
+    private final static int MENU_STOP_SYNC = 5;
     private final static int MENU_CLEAR_LOG = 6;
     
     /* Creates the menu items */
     public boolean onCreateOptionsMenu(Menu menu) {
         menu.add(0, MENU_SETTINGS, 0, R.string.settings);
         menu.add(0, MENU_REFRESH, 0, R.string.refreshstatus);
-        menu.add(0, MENU_STOP_SERVICE, 0, R.string.stopservice);
+        menu.add(0, MENU_STOP_SYNC, 0, R.string.stopsync);
         menu.add(0, MENU_CLEAR_LOG, 0, R.string.clearlog);
         menu.add(0, MENU_RESET, 0, R.string.reset);
         return true;
@@ -123,7 +123,7 @@ public class Main extends Activity implements MainActivity {
         	statProvider.clearAllEntries();
         	bindStatus();
             return true;
-        case MENU_STOP_SERVICE:
+        case MENU_STOP_SYNC:
 			Intent s = new Intent(this, SyncService.class);
 		    this.stopService(s);		
 		    bindStatus();

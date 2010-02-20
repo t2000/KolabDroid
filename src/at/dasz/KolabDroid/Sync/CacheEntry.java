@@ -29,6 +29,7 @@ import javax.mail.MessagingException;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.util.Log;
+import at.dasz.KolabDroid.Utils;
 import at.dasz.KolabDroid.Provider.DatabaseHelper;
 import at.dasz.KolabDroid.Provider.LocalCacheProvider;
 
@@ -147,8 +148,7 @@ public class CacheEntry
 		Date dt = null;
 		if(message != null) 
 		{
-			dt = message.getReceivedDate();
-			if(dt == null) dt = message.getSentDate();
+			dt = Utils.getMailDate(message);
 		}
 		boolean result = entry != null && message != null
 				&& entry.getRemoteChangedDate().equals(dt)

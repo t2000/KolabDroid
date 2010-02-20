@@ -26,7 +26,13 @@ import at.dasz.KolabDroid.R;
 
 public abstract class BaseWorker extends Thread
 {
-	private final static String			SYNC_ROOT		= "SYNC";
+	private final static String			SYNC_ROOT		= "SYNC_BaseWorker";
+	private BaseWorkerFinishedListener listener = null;
+	
+	public void setFinishedListener(BaseWorkerFinishedListener l)
+	{
+		listener = l;
+	}
 	
 	@Override
 	public void start()
@@ -73,6 +79,7 @@ public abstract class BaseWorker extends Thread
 		finally
 		{
 			isRunning = false;
+			if(listener != null) listener.onFinished();
 		}
 	}
 	

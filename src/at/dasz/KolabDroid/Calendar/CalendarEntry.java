@@ -26,42 +26,63 @@ import java.util.ArrayList;
 import android.text.format.Time;
 import at.dasz.KolabDroid.Utils;
 
-public class CalendarEntry {
-	private int id;
-	private int calendar_id;
-	private String title;
-	private boolean allDay;
-	private Time dtstart;
-	private Time dtend;
-	private String description;
-	private String eventLocation;
-	private int visibility;
-	private int hasAlarm;
-	private String rRule;
-	
-	public int getId() {
+public class CalendarEntry
+{
+
+	public static final String	YEARLY	= "YEARLY";
+	public static final String	MONTHLY	= "MONTHLY";
+	public static final String	WEEKLY	= "WEEKLY";
+	public static final String	DAILY	= "DAILY";
+
+	private int					id;
+	private int					calendar_id;
+	private String				title;
+	private boolean				allDay;
+	private Time				dtstart;
+	private Time				dtend;
+	private String				description;
+	private String				eventLocation;
+	private int					visibility;
+	private int					hasAlarm;
+	private String				rRule;
+
+	public int getId()
+	{
 		return id;
 	}
-	public void setId(int id) {
+
+	public void setId(int id)
+	{
 		this.id = id;
 	}
-	public int getCalendar_id() {
+
+	public int getCalendar_id()
+	{
 		return calendar_id;
 	}
-	public void setCalendar_id(int calendarId) {
+
+	public void setCalendar_id(int calendarId)
+	{
 		calendar_id = calendarId;
-	}	
-	
-	public String getTitle() {
+	}
+
+	public String getTitle()
+	{
 		return title;
 	}
-	public void setTitle(String title) {
+
+	public void setTitle(String title)
+	{
 		this.title = title;
 	}
-	public boolean getAllDay() {
+
+	public boolean getAllDay()
+	{
 		return allDay;
 	}
-	public void setAllDay(boolean allDay) {
+
+	public void setAllDay(boolean allDay)
+	{
 		this.allDay = allDay;
 		if(allDay) {
 			if(dtstart != null) {
@@ -80,65 +101,155 @@ public class CalendarEntry {
 			}
 		}
 	}
-	public Time getDtstart() {
+
+	public Time getDtstart()
+	{
 		return dtstart;
 	}
-	public void setDtstart(Time dtstart) {
+
+	public void setDtstart(Time dtstart)
+	{
 		this.dtstart = dtstart;
 	}
-	public Time getDtend() {
+
+	public Time getDtend()
+	{
 		return dtend;
 	}
-	public void setDtend(Time dtend) {
+
+	public void setDtend(Time dtend)
+	{
 		this.dtend = dtend;
 	}
-	public String getDescription() {
+
+	public String getDescription()
+	{
 		return description;
 	}
-	public void setDescription(String description) {
+
+	public void setDescription(String description)
+	{
 		this.description = description;
 	}
-	public String getEventLocation() {
+
+	public String getEventLocation()
+	{
 		return eventLocation;
 	}
-	public void setEventLocation(String eventLocation) {
+
+	public void setEventLocation(String eventLocation)
+	{
 		this.eventLocation = eventLocation;
 	}
-	public int getVisibility() {
+
+	public int getVisibility()
+	{
 		return visibility;
 	}
-	public void setVisibility(int visibility) {
+
+	public void setVisibility(int visibility)
+	{
 		this.visibility = visibility;
 	}
-	public int getHasAlarm() {
+
+	public int getHasAlarm()
+	{
 		return hasAlarm;
 	}
-	public void setHasAlarm(int hasAlarm) {
+
+	public void setHasAlarm(int hasAlarm)
+	{
 		this.hasAlarm = hasAlarm;
-	}	
+	}
+
 	public String getrRule()
 	{
 		return rRule;
 	}
+
 	public void setrRule(String rRule)
 	{
 		this.rRule = rRule;
 	}
-	
+
 	@Override
-	public String toString() {
+	public String toString()
+	{
 		return this.title + ": " + this.dtstart;
 	}
+
 	public String getLocalHash()
 	{
 		ArrayList<String> contents = new ArrayList<String>(4);
 		contents.add(getTitle() == null ? "no title" : getTitle());
-		contents.add(getDtstart() == null ? "no start" : "start " + getDtstart().toMillis(false));
-		contents.add(getDtend() == null ? "no end" : "end " + getDtend().toMillis(false));
+		contents.add(getDtstart() == null ? "no start" : "start "
+				+ getDtstart().toMillis(false));
+		contents.add(getDtend() == null ? "no end" : "end "
+				+ getDtend().toMillis(false));
 		contents.add(getAllDay() ? "AllDay" : "Not AllDay");
-		contents.add(getDescription() == null ? "no Description" : getDescription());
-		contents.add(getEventLocation() == null ? "no EventLocation" : getEventLocation());
+		contents.add(getDescription() == null ? "no Description"
+				: getDescription());
+		contents.add(getEventLocation() == null ? "no EventLocation"
+				: getEventLocation());
 		contents.add(getrRule() == null ? "no rRule" : getrRule());
-		return Utils.join("|", contents.toArray());	
+		return Utils.join("|", contents.toArray());
+	}
+
+	public static String monthToKolabMonth(String m)
+	{
+		if ("1".equals(m)) return "january";
+		else if ("2".equals(m)) return "february";
+		else if ("3".equals(m)) return "march";
+		else if ("4".equals(m)) return "april";
+		else if ("5".equals(m)) return "may";
+		else if ("6".equals(m)) return "june";
+		else if ("7".equals(m)) return "july";
+		else if ("8".equals(m)) return "august";
+		else if ("9".equals(m)) return "september";
+		else if ("10".equals(m)) return "october";
+		else if ("11".equals(m)) return "november";
+		else if ("12".equals(m)) return "december";
+		return "";
+	}
+
+	public static String kolabMonthToMonth(String m)
+	{
+		if ("january".equals(m)) return "1";
+		else if ("february".equals(m)) return "2";
+		else if ("march".equals(m)) return "3";
+		else if ("april".equals(m)) return "4";
+		else if ("may".equals(m)) return "5";
+		else if ("june".equals(m)) return "6";
+		else if ("july".equals(m)) return "7";
+		else if ("august".equals(m)) return "8";
+		else if ("september".equals(m)) return "9";
+		else if ("october".equals(m)) return "10";
+		else if ("november".equals(m)) return "11";
+		else if ("december".equals(m)) return "12";
+		return "";
+	}
+
+	public static String weekDayToKolabWeekDay(String d)
+	{
+		if ("MO".equals(d)) return "monday";
+		else if ("TU".equals(d)) return "tuesday";
+		else if ("WE".equals(d)) return "wednesday";
+		else if ("TH".equals(d)) return "thursday";
+		else if ("FR".equals(d)) return "friday";
+		else if ("SA".equals(d)) return "saturday";
+		else if ("SU".equals(d)) return "sunday";
+		return "";
+	}
+
+	public static String kolabWeekDayToWeekDay(String d)
+	{
+		if ("monday".equals(d)) return "MO";
+		else if ("tuesday".equals(d)) return "TU";
+		else if ("wednesday".equals(d)) return "WE";
+		else if ("thursday".equals(d)) return "TH";
+		else if ("friday".equals(d)) return "FR";
+		else if ("saturday".equals(d)) return "SA";
+		else if ("sunday".equals(d)) return "SU";
+		return "";
 	}
 }

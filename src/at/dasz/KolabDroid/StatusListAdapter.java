@@ -114,13 +114,17 @@ public class StatusListAdapter extends BaseExpandableListAdapter
 			msg.setText("Confliced");
 			txt.setText(Integer.toString((e.getConflicted())));
 			break;
+		case 8:
+			msg.setText("Errors");
+			txt.setText(Integer.toString((e.getErrors())));
+			break;
 		}
 		return v;
 	}
 
 	public int getChildrenCount(int groupPosition)
 	{
-		return 8;
+		return 9;
 	}
 
 	public Object getGroup(int groupPosition)

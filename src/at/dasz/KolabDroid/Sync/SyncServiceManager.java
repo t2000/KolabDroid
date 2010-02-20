@@ -35,6 +35,7 @@ public class SyncServiceManager extends BroadcastReceiver
 	{
 		if ("android.intent.action.BOOT_COMPLETED".equals(intent.getAction()))
 		{
+			// TODO: Replace with alarm manager
 			SyncService.startSync(context);
 		}
 		else

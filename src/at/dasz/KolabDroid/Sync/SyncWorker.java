@@ -50,6 +50,9 @@ import at.dasz.KolabDroid.Settings.Settings;
 
 public class SyncWorker extends BaseWorker
 {
+	// Not final to avoid warnings
+	private static boolean	DBG_LOCAL_CHANGED	= false;
+	private static boolean	DBG_REMOTE_CHANGED	= false;
 
 	public SyncWorker(Context context)
 	{
@@ -83,7 +86,11 @@ public class SyncWorker extends BaseWorker
 				statProvider.saveStatusEntry(status);
 			}
 
-			if (isStopping()) return;
+			if (isStopping())
+			{
+				StatusHandler.writeStatus(R.string.syncaborted);
+				return;
+			}
 
 			handler = new SyncCalendarHandler(this.context);
 			if (shouldProcess(handler))
@@ -92,7 +99,12 @@ public class SyncWorker extends BaseWorker
 				sync(settings, handler);
 				statProvider.saveStatusEntry(status);
 			}
-			status = null;
+
+			if (isStopping())
+			{
+				StatusHandler.writeStatus(R.string.syncaborted);
+				return;
+			}
 
 			StatusHandler.writeStatus(R.string.syncfinished);
 		}
@@ -102,12 +114,13 @@ public class SyncWorker extends BaseWorker
 					R.string.sync_error_format);
 
 			StatusHandler
-					.writeStatus(String.format(errorFormat, ex.toString()));
+					.writeStatus(String.format(errorFormat, ex.getMessage()));
 
 			ex.printStackTrace();
 		}
 		finally
 		{
+			status = null;
 			statProvider.close();
 			StatusHandler.notifySyncFinished();
 		}
@@ -120,7 +133,7 @@ public class SyncWorker extends BaseWorker
 	}
 
 	private void sync(Settings settings, SyncHandler handler)
-			throws MessagingException, IOException, 
+			throws MessagingException, IOException,
 			ParserConfigurationException
 	{
 		StatusHandler.writeStatus(R.string.connect_server);
@@ -197,7 +210,8 @@ public class SyncWorker extends BaseWorker
 						Log.d("sync",
 								"7. compare data to figure out what happened");
 						if (CacheEntry.isSame(sync.getCacheEntry(), sync
-								.getMessage()))
+								.getMessage())
+								&& !DBG_REMOTE_CHANGED)
 						{
 							Log.d("sync", "7.a/d cur=localdb");
 							if (handler.hasLocalItem(sync))
@@ -205,7 +219,8 @@ public class SyncWorker extends BaseWorker
 								Log
 										.d("sync",
 												"7.a check for local changes and upload them");
-								if (handler.hasLocalChanges(sync))
+								if (handler.hasLocalChanges(sync)
+										|| DBG_LOCAL_CHANGED)
 								{
 									Log
 											.i("sync",
@@ -248,6 +263,7 @@ public class SyncWorker extends BaseWorker
 				catch (SAXException ex)
 				{
 					Log.e("sync", ex.toString());
+					status.incrementErrors();
 				}
 				if (sync.getCacheEntry() != null)
 				{
@@ -292,9 +308,8 @@ public class SyncWorker extends BaseWorker
 					sync.setCacheEntry(cache.getEntryFromLocalId(localId));
 					if (sync.getCacheEntry() != null)
 					{
-						Log
-								.i("sync",
-										"9.b found in local cache: deleting locally");
+						Log.i("sync",
+								"9.b found in local cache: deleting locally");
 						status.incrementLocalDeleted();
 						handler.deleteLocalItem(sync);
 					}

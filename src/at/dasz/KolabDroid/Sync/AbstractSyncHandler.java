@@ -106,8 +106,7 @@ public abstract class AbstractSyncHandler implements SyncHandler
 	{
 		CacheEntry c = sync.getCacheEntry();
 		Message m = sync.getMessage();
-		Date dt = m.getReceivedDate();
-		if(dt == null) dt = m.getSentDate();
+		Date dt = Utils.getMailDate(m);
 		c.setRemoteChangedDate(dt); 
 		c.setRemoteId(m.getSubject());
 		c.setRemoteSize(m.getSize());
@@ -223,7 +222,7 @@ public abstract class AbstractSyncHandler implements SyncHandler
 	{
 		Message result = new MimeMessage(session);
 		result.setSubject(sync.getCacheEntry().getRemoteId());
-		result.setSentDate(sync.getCacheEntry().getRemoteChangedDate()); // TODO:
+		result.setSentDate(sync.getCacheEntry().getRemoteChangedDate());
 		MimeMultipart mp = new MimeMultipart();
 		MimeBodyPart txt = new MimeBodyPart();
 		txt.setText(getMessageBodyText(sync), "utf8");
