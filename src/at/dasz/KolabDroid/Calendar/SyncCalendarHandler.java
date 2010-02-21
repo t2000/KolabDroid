@@ -26,6 +26,7 @@ import java.util.Date;
 import java.util.UUID;
 import java.util.regex.Matcher;
 
+import javax.mail.MessagingException;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
@@ -51,7 +52,7 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 
 	private final CalendarProvider		calendarProvider;
 	private final ContentResolver		cr;
-	
+
 	public SyncCalendarHandler(Context context)
 	{
 		super(context);
@@ -128,11 +129,12 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 
 		Time start = Utils.getXmlElementTime(root, "start-date");
 		Time end = Utils.getXmlElementTime(root, "end-date");
-		
+
 		cal.setDtstart(start);
 		cal.setDtend(end);
-		
-		cal.setAllDay(start.hour == 0 && end.hour == 0 && start.minute == 0 && end.minute == 0 && start.second == 0 && end.second == 0);
+
+		cal.setAllDay(start.hour == 0 && end.hour == 0 && start.minute == 0
+				&& end.minute == 0 && start.second == 0 && end.second == 0);
 
 		Element recurrence = Utils.getXmlElement(root, "recurrence");
 		if (recurrence != null)
@@ -439,11 +441,13 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 		sb.append("\n");
 
 		sb.append("Start: ");
-		sb.append(cal.getDtstart().format("%c")); // TODO: Change format for allDay events
+		sb.append(cal.getDtstart().format("%c")); // TODO: Change format for
+													// allDay events
 		sb.append("\n");
 
 		sb.append("End: ");
-		sb.append(cal.getDtend().format("%c"));// TODO: Change format for allDay events
+		sb.append(cal.getDtend().format("%c"));// TODO: Change format for allDay
+												// events
 		sb.append("\n");
 
 		sb.append("Recurrence: ");
@@ -455,4 +459,17 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 		return sb.toString();
 	}
 
+	@Override
+	public String getItemText(SyncContext sync) throws MessagingException
+	{
+		if (sync.getLocalItem() != null)
+		{
+			CalendarEntry item = (CalendarEntry) sync.getLocalItem();
+			return item.getTitle() + ": " + item.getDtstart().toString();
+		}
+		else
+		{
+			return sync.getMessage().getSubject();
+		}
+	}
 }

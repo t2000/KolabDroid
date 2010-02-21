@@ -27,27 +27,20 @@ import android.util.Log;
 
 import com.commonsware.cwac.wakeful.WakefulIntentService;
 
-public class SyncService extends WakefulIntentService
+public class ResetService extends WakefulIntentService
 {
-	// private static final long ONE_SECOND = 1000;
-	// private static final long ONE_MINUTE = ONE_SECOND * 60;
-	// private static final long ONE_HOUR = ONE_MINUTE * 60;
-
-	// private static final long SYNC_INTERVAL = ONE_HOUR * 12;
-	// private static final long START_DELAY = ONE_SECOND * 5;
-
-	public SyncService()
+	public ResetService()
 	{
-		super("SyncService");
+		super("ResetService");
 	}
 
-	public static void startSync(Context context)
+	public static void startReset(Context context)
 	{
 		if(!BaseWorker.isRunning())
 		{
 			Log.i("Service", "starting service");
 			WakefulIntentService.acquireStaticLock(context);
-			context.startService(new Intent(context, SyncService.class));		
+			context.startService(new Intent(context, ResetService.class));		
 		}
 		else
 		{
@@ -58,16 +51,16 @@ public class SyncService extends WakefulIntentService
 	@Override
 	protected void doWakefulWork(Intent intent)
 	{
-		Log.i("Service", "starting sync");
+		Log.i("Service", "starting reset");
 		try
 		{
-			SyncWorker s = new SyncWorker(this);
-			s.start();
-			Log.i("Service", "sync finished");
+			ResetWorker r = new ResetWorker(this);
+			r.start();
+			Log.i("Service", "reset finished");
 		}
 		catch (Exception ex)
 		{
-			Log.i("Service", "sync failed: " + ex.toString());
+			Log.i("Service", "reset failed: " + ex.toString());
 		}
 	}
 }

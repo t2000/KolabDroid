@@ -53,6 +53,7 @@ public class CalendarProvider
 		List<CalendarEntry> result = new ArrayList<CalendarEntry>();
 
 		Cursor cur = cr.query(CALENDAR_URI, projection, null, null, null);
+		if (cur == null) return result;
 		try
 		{
 			if (cur.moveToFirst())
@@ -75,6 +76,7 @@ public class CalendarProvider
 		if (id == 0) return null;
 		Uri uri = ContentUris.withAppendedId(CALENDAR_URI, id);
 		Cursor cur = cr.query(uri, projection, null, null, null);
+		if (cur == null) return null;
 		try
 		{
 			if (cur.moveToFirst()) { return loadCalendarEntry(cur); }

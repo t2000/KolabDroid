@@ -34,8 +34,6 @@ import javax.mail.Store;
 import javax.mail.Flags.Flag;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.xml.sax.SAXException;
-
 import android.content.Context;
 import android.database.Cursor;
 import android.util.Log;
@@ -82,8 +80,14 @@ public class SyncWorker extends BaseWorker
 			if (shouldProcess(handler))
 			{
 				status = handler.getStatus();
-				sync(settings, handler);
-				statProvider.saveStatusEntry(status);
+				try
+				{
+					sync(settings, handler);
+				}
+				finally
+				{
+					statProvider.saveStatusEntry(status);
+				}
 			}
 
 			if (isStopping())
@@ -96,8 +100,14 @@ public class SyncWorker extends BaseWorker
 			if (shouldProcess(handler))
 			{
 				status = handler.getStatus();
-				sync(settings, handler);
-				statProvider.saveStatusEntry(status);
+				try
+				{
+					sync(settings, handler);
+				}
+				finally
+				{
+					statProvider.saveStatusEntry(status);
+				}
 			}
 
 			if (isStopping())
@@ -114,7 +124,7 @@ public class SyncWorker extends BaseWorker
 					R.string.sync_error_format);
 
 			StatusHandler
-					.writeStatus(String.format(errorFormat, ex.getMessage()));
+					.writeStatus(String.format(errorFormat, ex.toString()));
 
 			ex.printStackTrace();
 		}
@@ -260,7 +270,7 @@ public class SyncWorker extends BaseWorker
 						}
 					}
 				}
-				catch (SAXException ex)
+				catch (SyncException ex)
 				{
 					Log.e("sync", ex.toString());
 					status.incrementErrors();
@@ -278,57 +288,67 @@ public class SyncWorker extends BaseWorker
 			Log.d("sync", "9. process unprocessed local items");
 
 			Cursor c = handler.getAllLocalItemsCursor();
-			int currentLocalItemNo = 1;
-			try
+			if (c != null)
 			{
-				final int idColIdx = handler.getIdColumnIndex(c);
-
-				final String processItemFormat = this.context.getResources()
-						.getString(R.string.processing_item_format);
-
-				while (c.moveToNext())
+				int currentLocalItemNo = 1;
+				try
 				{
-					if (isStopping()) return;
+					final int idColIdx = handler.getIdColumnIndex(c);
 
-					int localId = c.getInt(idColIdx);
+					final String processItemFormat = this.context
+							.getResources().getString(
+									R.string.processing_item_format);
 
-					Log.d("sync", "9. processing #" + localId);
-
-					StatusHandler.writeStatus(String.format(processItemFormat,
-							currentLocalItemNo++));
-
-					if (processedEntries.contains(localId))
+					while (c.moveToNext())
 					{
-						// Log.d("sync",
-						// "9.a already processed from server: skipping");
-						continue;
-					}
+						if (isStopping()) return;
 
-					SyncContext sync = new SyncContext();
-					sync.setCacheEntry(cache.getEntryFromLocalId(localId));
-					if (sync.getCacheEntry() != null)
-					{
-						Log.i("sync",
-								"9.b found in local cache: deleting locally");
-						status.incrementLocalDeleted();
-						handler.deleteLocalItem(sync);
-					}
-					else
-					{
-						Log
-								.i("sync",
-										"9.c not found in local cache: creating on server");
-						status.incrementRemoteNew();
-						handler.createServerItemFromLocal(session,
-								sourceFolder, sync, localId);
+						int localId = c.getInt(idColIdx);
+
+						Log.d("sync", "9. processing #" + localId);
+
+						StatusHandler.writeStatus(String.format(
+								processItemFormat, currentLocalItemNo++));
+
+						if (processedEntries.contains(localId))
+						{
+							// Log.d("sync",
+							// "9.a already processed from server: skipping");
+							continue;
+						}
+
+						SyncContext sync = new SyncContext();
+						sync.setCacheEntry(cache.getEntryFromLocalId(localId));
+						if (sync.getCacheEntry() != null)
+						{
+							Log
+									.i("sync",
+											"9.b found in local cache: deleting locally");
+							status.incrementLocalDeleted();
+							handler.deleteLocalItem(sync);
+						}
+						else
+						{
+							Log
+									.i("sync",
+											"9.c not found in local cache: creating on server");
+							status.incrementRemoteNew();
+							handler.createServerItemFromLocal(session,
+									sourceFolder, sync, localId);
+						}
 					}
 				}
-			}
-			finally
-			{
-				if (c != null && !c.isClosed())
+				catch (SyncException ex)
 				{
-					c.close();
+					Log.e("sync", ex.toString());
+					status.incrementErrors();
+				}
+				finally
+				{
+					if (c != null && !c.isClosed())
+					{
+						c.close();
+					}
 				}
 			}
 		}

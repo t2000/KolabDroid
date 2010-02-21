@@ -37,7 +37,7 @@ import android.widget.TextView;
 import at.dasz.KolabDroid.Imap.DchFactory;
 import at.dasz.KolabDroid.Provider.StatusProvider;
 import at.dasz.KolabDroid.Sync.BaseWorker;
-import at.dasz.KolabDroid.Sync.ResetWorker;
+import at.dasz.KolabDroid.Sync.ResetService;
 import at.dasz.KolabDroid.Sync.SyncService;
 
 public class Main extends Activity implements MainActivity {
@@ -159,8 +159,7 @@ public class Main extends Activity implements MainActivity {
 
     private final DialogInterface.OnClickListener dlgResetListener = new DialogInterface.OnClickListener() {
 		public void onClick(DialogInterface dialog, int which) {
-			ResetWorker s = new ResetWorker(Main.this);
-			s.start();
+			ResetService.startReset(Main.this);
 			dialog.cancel();
 		}
     };

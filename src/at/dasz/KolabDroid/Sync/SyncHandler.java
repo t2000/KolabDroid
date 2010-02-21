@@ -28,8 +28,6 @@ import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.xml.sax.SAXException;
-
 import android.database.Cursor;
 import at.dasz.KolabDroid.Provider.LocalCacheProvider;
 
@@ -63,11 +61,11 @@ public interface SyncHandler
 	 * @return
 	 * @throws MessagingException
 	 * @throws IOException 
-	 * @throws SAXException 
 	 * @throws ParserConfigurationException 
+	 * @throws SyncException 
 	 */
 	public abstract void createLocalItemFromServer(SyncContext sync)
-			throws MessagingException, ParserConfigurationException, SAXException, IOException;
+			throws MessagingException, ParserConfigurationException, IOException, SyncException;
 
 	/**
 	 * Upload the item specified by the cache entry to the targetFolder.
@@ -78,9 +76,10 @@ public interface SyncHandler
 	 * @return
 	 * @throws MessagingException
 	 * @throws ParserConfigurationException 
+	 * @throws SyncException 
 	 */
 	public abstract void createServerItemFromLocal(Session session,
-			Folder targetFolder, SyncContext sync, int localId) throws MessagingException, ParserConfigurationException;
+			Folder targetFolder, SyncContext sync, int localId) throws MessagingException, ParserConfigurationException, SyncException;
 
 	/**
 	 * Update the local item and cache entry with the data from the server.
@@ -90,10 +89,10 @@ public interface SyncHandler
 	 * @return
 	 * @throws MessagingException
 	 * @throws IOException 
-	 * @throws SAXException 
 	 * @throws ParserConfigurationException 
+	 * @throws SyncException 
 	 */
-	public abstract void updateLocalItemFromServer(SyncContext sync) throws MessagingException, ParserConfigurationException, SAXException, IOException;
+	public abstract void updateLocalItemFromServer(SyncContext sync) throws MessagingException, ParserConfigurationException, IOException, SyncException;
 
 	/**
 	 * Update the message and cache entry with the local data.
@@ -103,17 +102,19 @@ public interface SyncHandler
 	 * @return
 	 * @throws MessagingException
 	 * @throws IOException 
-	 * @throws SAXException 
+	 * @throws SyncException 
+	 * @throws ParserConfigurationException 
 	 */
 	public abstract void updateServerItemFromLocal(Session session,
-			Folder targetFolder,SyncContext sync) throws MessagingException, IOException, SAXException;
+			Folder targetFolder,SyncContext sync) throws MessagingException, IOException, SyncException, ParserConfigurationException;
 
 	/**
 	 * Delete the local item and cache entry.
 	 * 
 	 * @param entry
+	 * @throws SyncException 
 	 */
-	public abstract void deleteLocalItem(SyncContext sync);
+	public abstract void deleteLocalItem(SyncContext sync) throws SyncException;
 
 	/**
 	 * Delete the message and cache entry.
@@ -121,7 +122,8 @@ public interface SyncHandler
 	 * @param entry
 	 * @param message
 	 * @throws MessagingException
+	 * @throws SyncException 
 	 */
 	public abstract void deleteServerItem(SyncContext sync)
-			throws MessagingException;
+			throws MessagingException, SyncException;
 }

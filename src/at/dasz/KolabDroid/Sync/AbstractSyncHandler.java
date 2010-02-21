@@ -62,59 +62,87 @@ public abstract class AbstractSyncHandler implements SyncHandler
 	}
 
 	protected StatusEntry	status;
-	protected Context 		context;
-	
-	protected abstract String getMimeType();
-	
-	protected abstract String writeXml(SyncContext sync) throws ParserConfigurationException;
-	protected abstract String getMessageBodyText(SyncContext sync);	
+	protected Context		context;
 
-	protected abstract void updateLocalItemFromServer(SyncContext sync, Document xml);
-	protected abstract void updateServerItemFromLocal(SyncContext sync, Document xml);
-	
-	public abstract void deleteLocalItem(int localId);
+	protected abstract String getMimeType();
+
+	protected abstract String writeXml(SyncContext sync)
+			throws ParserConfigurationException;
+
+	protected abstract String getMessageBodyText(SyncContext sync);
+
+	public abstract String getItemText(SyncContext sync) throws MessagingException;
+
+	protected abstract void updateLocalItemFromServer(SyncContext sync,
+			Document xml) throws SyncException;
+
+	protected abstract void updateServerItemFromLocal(SyncContext sync,
+			Document xml) throws SyncException;
+
+	public abstract void deleteLocalItem(int localId) throws SyncException;
 
 	public StatusEntry getStatus()
 	{
 		return status;
 	}
-	
+
 	public void createLocalItemFromServer(SyncContext sync)
-			throws MessagingException, ParserConfigurationException, SAXException, IOException
+			throws MessagingException, ParserConfigurationException,
+			IOException, SyncException
 	{
 		Log.d("sync", "Downloading item ...");
-		InputStream xmlinput = extractXml(sync.getMessage());
-		Document doc = Utils.getDocument(xmlinput);
-		updateLocalItemFromServer(sync, doc);
-		updateCacheEntryFromMessage(sync);
-	}
-
-	public void updateLocalItemFromServer(SyncContext sync) throws MessagingException, ParserConfigurationException, SAXException, IOException
-	{
-		if (hasLocalItem(sync))
+		try
 		{
-			Log.d("sync", "Updating without conflict check: "
-					+ sync.getCacheEntry().getLocalId());
 			InputStream xmlinput = extractXml(sync.getMessage());
 			Document doc = Utils.getDocument(xmlinput);
 			updateLocalItemFromServer(sync, doc);
 			updateCacheEntryFromMessage(sync);
 		}
+		catch (SAXException ex)
+		{
+			throw new SyncException(getItemText(sync),
+					"Unable to extract XML Document", ex);
+		}
 	}
 
-	private void updateCacheEntryFromMessage(SyncContext sync) throws MessagingException
+	public void updateLocalItemFromServer(SyncContext sync)
+			throws MessagingException, ParserConfigurationException,
+			IOException, SyncException
+	{
+		if (hasLocalItem(sync))
+		{
+			Log.d("sync", "Updating without conflict check: "
+					+ sync.getCacheEntry().getLocalId());
+			try
+			{
+				InputStream xmlinput = extractXml(sync.getMessage());
+				Document doc = Utils.getDocument(xmlinput);
+				updateLocalItemFromServer(sync, doc);
+				updateCacheEntryFromMessage(sync);
+			}
+			catch (SAXException ex)
+			{
+				throw new SyncException(getItemText(sync),
+						"Unable to extract XML Document", ex);
+			}
+		}
+	}
+
+	private void updateCacheEntryFromMessage(SyncContext sync)
+			throws MessagingException
 	{
 		CacheEntry c = sync.getCacheEntry();
 		Message m = sync.getMessage();
 		Date dt = Utils.getMailDate(m);
-		c.setRemoteChangedDate(dt); 
+		c.setRemoteChangedDate(dt);
 		c.setRemoteId(m.getSubject());
 		c.setRemoteSize(m.getSize());
 		getLocalCacheProvider().saveEntry(c);
 	}
 
-	public void createServerItemFromLocal(Session session,
-			Folder targetFolder, SyncContext sync, int localId) throws MessagingException, ParserConfigurationException
+	public void createServerItemFromLocal(Session session, Folder targetFolder,
+			SyncContext sync, int localId) throws MessagingException,
+			ParserConfigurationException, SyncException
 	{
 		Log.d("sync", "Uploading: #" + localId);
 
@@ -131,38 +159,39 @@ public abstract class AbstractSyncHandler implements SyncHandler
 		sync.setMessage(m);
 		updateCacheEntryFromMessage(sync);
 	}
-	
 
-	public void updateServerItemFromLocal(Session session,
-			Folder targetFolder, SyncContext sync)
-			throws MessagingException, IOException, SAXException
+	public void updateServerItemFromLocal(Session session, Folder targetFolder,
+			SyncContext sync) throws MessagingException, IOException,
+			SyncException, ParserConfigurationException
 	{
-		Log.d("sync", "Update item on Server: #" + sync.getCacheEntry().getLocalId());
-		
+		Log.d("sync", "Update item on Server: #"
+				+ sync.getCacheEntry().getLocalId());
+
 		InputStream xmlinput = extractXml(sync.getMessage());
 		try
 		{
-			// Parse XML 
+			// Parse XML
 			Document doc = Utils.getDocument(xmlinput);
-			
+
 			// Update
 			updateServerItemFromLocal(sync, doc);
 
-			// Create & Upload new Message  
+			// Create & Upload new Message
 			// IMAP needs a new Message uploaded
 			String xml = Utils.getXml(doc);
 			Message newMessage = wrapXmlInMessage(session, sync, xml);
 			targetFolder.appendMessages(new Message[] { newMessage });
 			newMessage.saveChanges();
-			
+
 			sync.getMessage().setFlag(Flag.DELETED, true);
 			sync.setMessage(newMessage);
-			
-			updateCacheEntryFromMessage(sync);			
+
+			updateCacheEntryFromMessage(sync);
 		}
-		catch (ParserConfigurationException ex)
+		catch (SAXException ex)
 		{
-			throw new RuntimeException(ex);
+			throw new SyncException(getItemText(sync),
+					"Unable to extract XML Document", ex);
 		}
 		finally
 		{
@@ -170,18 +199,20 @@ public abstract class AbstractSyncHandler implements SyncHandler
 		}
 	}
 
-	
-	public void deleteLocalItem(SyncContext sync)
+	public void deleteLocalItem(SyncContext sync) throws SyncException
 	{
-		Log.d("sync", "Deleting locally: " + sync.getCacheEntry().getLocalHash());
+		Log.d("sync", "Deleting locally: "
+				+ sync.getCacheEntry().getLocalHash());
 		deleteLocalItem(sync.getCacheEntry().getLocalId());
 		getLocalCacheProvider().deleteEntry(sync.getCacheEntry());
 	}
 
-	public void deleteServerItem(SyncContext sync)
-			throws MessagingException
+	public void deleteServerItem(SyncContext sync) throws MessagingException,
+			SyncException
 	{
-		Log.d("sync", "Deleting from server: " + sync.getMessage().getSubject());
+		Log
+				.d("sync", "Deleting from server: "
+						+ sync.getMessage().getSubject());
 		sync.getMessage().setFlag(Flag.DELETED, true);
 		// remove contents too, to avoid confusing the butchered JAF
 		// message.setContent("", "text/plain");
@@ -215,10 +246,9 @@ public abstract class AbstractSyncHandler implements SyncHandler
 		}
 		return null;
 	}
-	
 
-	private Message wrapXmlInMessage(Session session, 
-			SyncContext sync, String xml) throws MessagingException
+	private Message wrapXmlInMessage(Session session, SyncContext sync,
+			String xml) throws MessagingException
 	{
 		Message result = new MimeMessage(session);
 		result.setSubject(sync.getCacheEntry().getRemoteId());

@@ -24,31 +24,12 @@ package at.dasz.KolabDroid.Sync;
 import android.content.Context;
 import at.dasz.KolabDroid.R;
 
-public abstract class BaseWorker extends Thread
+public abstract class BaseWorker
 {
-	private final static String			SYNC_ROOT		= "SYNC_BaseWorker";
-	private BaseWorkerFinishedListener listener = null;
-	
-	public void setFinishedListener(BaseWorkerFinishedListener l)
-	{
-		listener = l;
-	}
-	
-	@Override
-	public void start()
-	{
-		synchronized (SYNC_ROOT)
-		{
-			if(!isRunning)
-			{
-				isRunning = true;
-				super.start();
-			}
-		}
-	}
+	private final static String	SYNC_ROOT	= "SYNC_BaseWorker";
 
-	private static boolean	isRunning	= false;
-	private static boolean	isStopping	= false;
+	private static boolean		isRunning	= false;
+	private static boolean		isStopping	= false;
 
 	public static boolean isRunning()
 	{
@@ -57,7 +38,7 @@ public abstract class BaseWorker extends Thread
 			return isRunning;
 		}
 	}
-	
+
 	public static boolean isStopping()
 	{
 		synchronized (SYNC_ROOT)
@@ -65,24 +46,30 @@ public abstract class BaseWorker extends Thread
 			return isStopping;
 		}
 	}
-	
+
 	protected abstract void runWorker();
-	
-	@Override
-	public void run()
+
+	public void start()
 	{
 		try
 		{
-			isStopping = false;
+			synchronized (SYNC_ROOT)
+			{
+				if(isRunning) return;
+				isRunning = true;
+				isStopping = false;
+			}
 			runWorker();
 		}
 		finally
 		{
-			isRunning = false;
-			if(listener != null) listener.onFinished();
+			synchronized (SYNC_ROOT)
+			{
+				isRunning = false;
+			}
 		}
 	}
-	
+
 	public static void stopWorker()
 	{
 		synchronized (SYNC_ROOT)
@@ -92,15 +79,16 @@ public abstract class BaseWorker extends Thread
 	}
 
 	private static int	runningMessageResID	= 0;
+
 	public static int getRunningMessageResID()
 	{
 		synchronized (SYNC_ROOT)
 		{
-			if(runningMessageResID == 0) return R.string.workerisrunning;
+			if (runningMessageResID == 0) return R.string.workerisrunning;
 			return runningMessageResID;
 		}
 	}
-	
+
 	protected void setRunningMessage(int resid)
 	{
 		synchronized (SYNC_ROOT)
