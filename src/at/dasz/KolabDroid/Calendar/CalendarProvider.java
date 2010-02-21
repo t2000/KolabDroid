@@ -31,6 +31,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.text.format.DateUtils;
 import android.text.format.Time;
+import at.dasz.KolabDroid.Sync.SyncException;
 
 public class CalendarProvider
 {
@@ -48,12 +49,12 @@ public class CalendarProvider
 		this.cr = cr;
 	}
 
-	public List<CalendarEntry> loadAllCalendarEntries(int calendar_id)
+	public List<CalendarEntry> loadAllCalendarEntries(int calendar_id) throws SyncException
 	{
 		List<CalendarEntry> result = new ArrayList<CalendarEntry>();
 
 		Cursor cur = cr.query(CALENDAR_URI, projection, null, null, null);
-		if (cur == null) return result;
+		if (cur == null) throw new SyncException(Integer.toString(calendar_id), "cr.query returned null");
 		try
 		{
 			if (cur.moveToFirst())
@@ -71,12 +72,12 @@ public class CalendarProvider
 		}
 	}
 
-	public CalendarEntry loadCalendarEntry(int id)
+	public CalendarEntry loadCalendarEntry(int id) throws SyncException
 	{
 		if (id == 0) return null;
 		Uri uri = ContentUris.withAppendedId(CALENDAR_URI, id);
 		Cursor cur = cr.query(uri, projection, null, null, null);
-		if (cur == null) return null;
+		if (cur == null) throw new SyncException(Integer.toString(id), "cr.query returned null");
 		try
 		{
 			if (cur.moveToFirst()) { return loadCalendarEntry(cur); }

@@ -43,7 +43,7 @@ public interface SyncHandler
 
 	public abstract LocalCacheProvider getLocalCacheProvider();
 
-	public abstract boolean hasLocalItem(SyncContext sync);
+	public abstract boolean hasLocalItem(SyncContext sync) throws SyncException, MessagingException;
 
 	/**
 	 * Returns true if there are local changes with respect to the specified
@@ -51,8 +51,10 @@ public interface SyncHandler
 	 * 
 	 * @param entry
 	 * @return
+	 * @throws MessagingException 
+	 * @throws SyncException 
 	 */
-	public abstract boolean hasLocalChanges(SyncContext sync);
+	public abstract boolean hasLocalChanges(SyncContext sync) throws SyncException, MessagingException;
 
 	/**
 	 * Create a local item and cache entry from the message.

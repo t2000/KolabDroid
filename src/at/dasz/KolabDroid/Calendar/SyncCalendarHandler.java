@@ -44,6 +44,7 @@ import at.dasz.KolabDroid.Settings.Settings;
 import at.dasz.KolabDroid.Sync.AbstractSyncHandler;
 import at.dasz.KolabDroid.Sync.CacheEntry;
 import at.dasz.KolabDroid.Sync.SyncContext;
+import at.dasz.KolabDroid.Sync.SyncException;
 
 public class SyncCalendarHandler extends AbstractSyncHandler
 {
@@ -88,7 +89,6 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 	@Override
 	public void deleteLocalItem(int localId)
 	{
-		System.out.println("Deleting Calendar#" + localId);
 		calendarProvider.delete(localId);
 	}
 
@@ -98,15 +98,14 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 		return "application/x-vnd.kolab.event";
 	}
 
-	public boolean hasLocalItem(SyncContext sync)
+	public boolean hasLocalItem(SyncContext sync) throws SyncException
 	{
 		return getLocalItem(sync) != null;
 	}
 
-	public boolean hasLocalChanges(SyncContext sync)
+	public boolean hasLocalChanges(SyncContext sync) throws SyncException
 	{
 		CacheEntry e = sync.getCacheEntry();
-		System.out.println("Checking for local changes: #" + e.getLocalId());
 		CalendarEntry cal = getLocalItem(sync);
 		String entryHash = e.getLocalHash();
 		String calHash = cal != null ? cal.getLocalHash() : "";
@@ -236,7 +235,7 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 	}
 
 	@Override
-	protected void updateServerItemFromLocal(SyncContext sync, Document xml)
+	protected void updateServerItemFromLocal(SyncContext sync, Document xml) throws SyncException
 	{
 		CalendarEntry source = getLocalItem(sync);
 		CacheEntry entry = sync.getCacheEntry();
@@ -400,7 +399,7 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 
 	@Override
 	protected String writeXml(SyncContext sync)
-			throws ParserConfigurationException
+			throws ParserConfigurationException, SyncException
 	{
 		CalendarEntry source = getLocalItem(sync);
 		CacheEntry entry = sync.getCacheEntry();
@@ -417,7 +416,7 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 		return Utils.getXml(xml);
 	}
 
-	private CalendarEntry getLocalItem(SyncContext sync)
+	private CalendarEntry getLocalItem(SyncContext sync) throws SyncException
 	{
 		if (sync.getLocalItem() != null) return (CalendarEntry) sync
 				.getLocalItem();
@@ -428,7 +427,7 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 	}
 
 	@Override
-	protected String getMessageBodyText(SyncContext sync)
+	protected String getMessageBodyText(SyncContext sync) throws SyncException
 	{
 		CalendarEntry cal = getLocalItem(sync);
 		StringBuilder sb = new StringBuilder();

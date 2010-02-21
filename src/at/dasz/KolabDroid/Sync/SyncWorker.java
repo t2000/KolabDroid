@@ -144,7 +144,7 @@ public class SyncWorker extends BaseWorker
 
 	private void sync(Settings settings, SyncHandler handler)
 			throws MessagingException, IOException,
-			ParserConfigurationException
+			ParserConfigurationException, SyncException
 	{
 		StatusHandler.writeStatus(R.string.connect_server);
 		Store server = null;
@@ -288,67 +288,64 @@ public class SyncWorker extends BaseWorker
 			Log.d("sync", "9. process unprocessed local items");
 
 			Cursor c = handler.getAllLocalItemsCursor();
-			if (c != null)
+			if (c == null) throw new SyncException("getAllLocalItems",
+					"cr.query returned null");
+			int currentLocalItemNo = 1;
+			try
 			{
-				int currentLocalItemNo = 1;
-				try
+				final int idColIdx = handler.getIdColumnIndex(c);
+
+				final String processItemFormat = this.context.getResources()
+						.getString(R.string.processing_item_format);
+
+				while (c.moveToNext())
 				{
-					final int idColIdx = handler.getIdColumnIndex(c);
+					if (isStopping()) return;
 
-					final String processItemFormat = this.context
-							.getResources().getString(
-									R.string.processing_item_format);
+					int localId = c.getInt(idColIdx);
 
-					while (c.moveToNext())
+					Log.d("sync", "9. processing #" + localId);
+
+					StatusHandler.writeStatus(String.format(processItemFormat,
+							currentLocalItemNo++));
+
+					if (processedEntries.contains(localId))
 					{
-						if (isStopping()) return;
+						// Log.d("sync",
+						// "9.a already processed from server: skipping");
+						continue;
+					}
 
-						int localId = c.getInt(idColIdx);
-
-						Log.d("sync", "9. processing #" + localId);
-
-						StatusHandler.writeStatus(String.format(
-								processItemFormat, currentLocalItemNo++));
-
-						if (processedEntries.contains(localId))
-						{
-							// Log.d("sync",
-							// "9.a already processed from server: skipping");
-							continue;
-						}
-
-						SyncContext sync = new SyncContext();
-						sync.setCacheEntry(cache.getEntryFromLocalId(localId));
-						if (sync.getCacheEntry() != null)
-						{
-							Log
-									.i("sync",
-											"9.b found in local cache: deleting locally");
-							status.incrementLocalDeleted();
-							handler.deleteLocalItem(sync);
-						}
-						else
-						{
-							Log
-									.i("sync",
-											"9.c not found in local cache: creating on server");
-							status.incrementRemoteNew();
-							handler.createServerItemFromLocal(session,
-									sourceFolder, sync, localId);
-						}
+					SyncContext sync = new SyncContext();
+					sync.setCacheEntry(cache.getEntryFromLocalId(localId));
+					if (sync.getCacheEntry() != null)
+					{
+						Log.i("sync",
+								"9.b found in local cache: deleting locally");
+						status.incrementLocalDeleted();
+						handler.deleteLocalItem(sync);
+					}
+					else
+					{
+						Log
+								.i("sync",
+										"9.c not found in local cache: creating on server");
+						status.incrementRemoteNew();
+						handler.createServerItemFromLocal(session,
+								sourceFolder, sync, localId);
 					}
 				}
-				catch (SyncException ex)
+			}
+			catch (SyncException ex)
+			{
+				Log.e("sync", ex.toString());
+				status.incrementErrors();
+			}
+			finally
+			{
+				if (!c.isClosed())
 				{
-					Log.e("sync", ex.toString());
-					status.incrementErrors();
-				}
-				finally
-				{
-					if (c != null && !c.isClosed())
-					{
-						c.close();
-					}
+					c.close();
 				}
 			}
 		}

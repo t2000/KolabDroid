@@ -29,13 +29,6 @@ import com.commonsware.cwac.wakeful.WakefulIntentService;
 
 public class SyncService extends WakefulIntentService
 {
-	// private static final long ONE_SECOND = 1000;
-	// private static final long ONE_MINUTE = ONE_SECOND * 60;
-	// private static final long ONE_HOUR = ONE_MINUTE * 60;
-
-	// private static final long SYNC_INTERVAL = ONE_HOUR * 12;
-	// private static final long START_DELAY = ONE_SECOND * 5;
-
 	public SyncService()
 	{
 		super("SyncService");

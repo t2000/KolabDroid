@@ -67,9 +67,9 @@ public abstract class AbstractSyncHandler implements SyncHandler
 	protected abstract String getMimeType();
 
 	protected abstract String writeXml(SyncContext sync)
-			throws ParserConfigurationException;
+			throws ParserConfigurationException, SyncException, MessagingException;
 
-	protected abstract String getMessageBodyText(SyncContext sync);
+	protected abstract String getMessageBodyText(SyncContext sync) throws SyncException, MessagingException;
 
 	public abstract String getItemText(SyncContext sync) throws MessagingException;
 
@@ -77,7 +77,7 @@ public abstract class AbstractSyncHandler implements SyncHandler
 			Document xml) throws SyncException;
 
 	protected abstract void updateServerItemFromLocal(SyncContext sync,
-			Document xml) throws SyncException;
+			Document xml) throws SyncException, MessagingException;
 
 	public abstract void deleteLocalItem(int localId) throws SyncException;
 
@@ -183,7 +183,9 @@ public abstract class AbstractSyncHandler implements SyncHandler
 			targetFolder.appendMessages(new Message[] { newMessage });
 			newMessage.saveChanges();
 
+			// Delete old message
 			sync.getMessage().setFlag(Flag.DELETED, true);
+			// Replace sync context with new message
 			sync.setMessage(newMessage);
 
 			updateCacheEntryFromMessage(sync);
@@ -248,14 +250,14 @@ public abstract class AbstractSyncHandler implements SyncHandler
 	}
 
 	private Message wrapXmlInMessage(Session session, SyncContext sync,
-			String xml) throws MessagingException
+			String xml) throws MessagingException, SyncException
 	{
 		Message result = new MimeMessage(session);
 		result.setSubject(sync.getCacheEntry().getRemoteId());
 		result.setSentDate(sync.getCacheEntry().getRemoteChangedDate());
 		MimeMultipart mp = new MimeMultipart();
 		MimeBodyPart txt = new MimeBodyPart();
-		txt.setText(getMessageBodyText(sync), "utf8");
+		txt.setText(getMessageBodyText(sync), "utf-8");
 		mp.addBodyPart(txt);
 
 		BodyPart messageBodyPart = new MimeBodyPart();
