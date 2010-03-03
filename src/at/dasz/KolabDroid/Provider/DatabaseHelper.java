@@ -24,18 +24,26 @@ package at.dasz.KolabDroid.Provider;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 import at.dasz.KolabDroid.Utils;
 
+/**
+ * @author arthur
+ *
+ */
 public class DatabaseHelper extends SQLiteOpenHelper
 {
 	private final static String		DATABASE_NAME				= "KolabDroid.db";
-	private final static int		DATABASE_VERSION			= 4;
+	private final static int		DATABASE_VERSION			= 5;
 	
 	public final static String			COL_ID						= "_id";
 	public final static int				COL_IDX_ID					= 0;
 	
 	public static final String[]	ID_PROJECTION				= new String[] { COL_ID };
 
+	/**
+	 * @param context
+	 */
 	DatabaseHelper(Context context)
 	{
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -50,12 +58,35 @@ public class DatabaseHelper extends SQLiteOpenHelper
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion)
 	{
-		// TODO: create proper upgrade path, so not to loose available
 		// sync-info
 		if (oldVersion != newVersion)
 		{
-			dropDb(db);
-			createDb(db);
+			Log.i("Database", "Upgrading Database from " + oldVersion + " to " + newVersion);
+			if(oldVersion < 4)
+			{
+				// Old development version, no upgrade path
+				dropDb(db);
+				createDb(db);
+			}
+			if(oldVersion == 4)
+			{
+				// Add alter statements for version upgrade 4 to 5
+				// Add error message column
+				db.execSQL("ALTER TABLE " + StatusProvider.STATUS_TABLE_NAME + " ADD " + StatusProvider.COL_fatalErrorMsg  + " TEXT");
+				// Next version, continue upgrade
+				oldVersion = 5;
+			}
+			if(oldVersion == 5)
+			{
+				// Add alter statements for version upgrade 5 to 6
+				// ...
+				// Next version, continue upgrade
+				oldVersion = 6;
+			}
+		}
+		else
+		{
+			Log.i("Database", "No need to upgrade Database");			
 		}
 	}
 

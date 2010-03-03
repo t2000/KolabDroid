@@ -47,6 +47,8 @@ public class StatusEntry
 	
 	private int		conflicted;
 	private int		errors;
+
+	private String	fatalErrorMsg;
 	
 	public StatusEntry()
 	{
@@ -74,6 +76,7 @@ public class StatusEntry
 		
 		setConflicted(c.getInt(StatusProvider.COL_IDX_conflicted));
 		setErrors(c.getInt(StatusProvider.COL_IDX_errors));
+		setFatalErrorMsg(c.getString(StatusProvider.COL_IDX_fatalErrorMsg));
 	}
 	
 	public ContentValues toContentValues()
@@ -98,6 +101,7 @@ public class StatusEntry
 		
 		result.put(StatusProvider.COL_conflicted, getConflicted());
 		result.put(StatusProvider.COL_errors, getErrors());
+		result.put(StatusProvider.COL_fatalErrorMsg, getFatalErrorMsg());
 
 		return result;
 	}
@@ -260,5 +264,15 @@ public class StatusEntry
 	public int incrementErrors()
 	{
 		return ++errors;
+	}
+	
+	public String getFatalErrorMsg()
+	{
+		return fatalErrorMsg;
+	}
+
+	public void setFatalErrorMsg(String fatalErrorMsg)
+	{
+		this.fatalErrorMsg = fatalErrorMsg;
 	}
 }

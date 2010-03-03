@@ -84,6 +84,12 @@ public class SyncWorker extends BaseWorker
 				{
 					sync(settings, handler);
 				}
+				catch(Exception ex)
+				{
+					// Save fatal sync exception
+					status.setFatalErrorMsg(ex.toString());
+					throw ex;
+				}
 				finally
 				{
 					statProvider.saveStatusEntry(status);
@@ -103,6 +109,12 @@ public class SyncWorker extends BaseWorker
 				try
 				{
 					sync(settings, handler);
+				}
+				catch(Exception ex)
+				{
+					// Save fatal sync exception
+					status.setFatalErrorMsg(ex.toString());
+					throw ex;
 				}
 				finally
 				{

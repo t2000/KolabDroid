@@ -49,6 +49,7 @@ public class StatusProvider
 
 	public final static String		COL_conflicted			= "conflicted";
 	public final static String		COL_errors				= "errors";
+	public final static String		COL_fatalErrorMsg		= "fatalErrorMsg";
 
 	public final static int			COL_IDX_time			= 1;
 	public final static int			COL_IDX_task			= 2;
@@ -66,6 +67,7 @@ public class StatusProvider
 
 	public final static int			COL_IDX_conflicted		= 10;
 	public final static int			COL_IDX_errors			= 11;
+	public final static int			COL_IDX_fatalErrorMsg	= 12;
 
 	public static final String[]	DEFAULT_PROJECTION		= new String[] {
 			DatabaseHelper.COL_ID, // 0
@@ -80,6 +82,7 @@ public class StatusProvider
 			COL_remoteDeleted, // 9
 			COL_conflicted, // 10
 			COL_errors, // 11
+			COL_fatalErrorMsg, // 12
 															};
 
 	private DatabaseHelper			dbHelper;

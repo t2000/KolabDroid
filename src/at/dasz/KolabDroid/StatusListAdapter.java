@@ -33,14 +33,14 @@ import at.dasz.KolabDroid.Sync.StatusEntry;
 
 public class StatusListAdapter extends BaseExpandableListAdapter
 {
-	private ArrayList<StatusEntry>	statusList = new ArrayList<StatusEntry>();
+	private ArrayList<StatusEntry>	statusList	= new ArrayList<StatusEntry>();
 	private Activity				context;
 
 	public StatusListAdapter(Activity context)
 	{
 		this.context = context;
 	}
-	
+
 	public void refresh()
 	{
 		StatusProvider db = new StatusProvider(context);
@@ -68,14 +68,16 @@ public class StatusListAdapter extends BaseExpandableListAdapter
 	public View getChildView(int groupPosition, int childPosition,
 			boolean isLastChild, View convertView, ViewGroup parent)
 	{
+		StatusEntry e = statusList.get(groupPosition);
+
 		View v = convertView;
+
+		// Create view if it's not reusable
 		if (v == null)
 		{
 			v = context.getLayoutInflater().inflate(R.layout.statuslist_item,
 					null);
 		}
-
-		StatusEntry e = statusList.get(groupPosition);
 
 		TextView msg = (TextView) v.findViewById(R.id.msg);
 		TextView txt = (TextView) v.findViewById(R.id.text);
@@ -84,39 +86,43 @@ public class StatusListAdapter extends BaseExpandableListAdapter
 		{
 		case 0:
 			msg.setText("Items");
-			txt.setText(Integer.toString((e.getItems())));
+			txt.setText(Integer.toString(e.getItems()));
 			break;
 		case 1:
 			msg.setText("Local changed");
-			txt.setText(Integer.toString((e.getLocalChanged())));
+			txt.setText(Integer.toString(e.getLocalChanged()));
 			break;
 		case 2:
 			msg.setText("Remote changed");
-			txt.setText(Integer.toString((e.getRemoteChanged())));
+			txt.setText(Integer.toString(e.getRemoteChanged()));
 			break;
 		case 3:
 			msg.setText("Local added");
-			txt.setText(Integer.toString((e.getLocalNew())));
+			txt.setText(Integer.toString(e.getLocalNew()));
 			break;
 		case 4:
 			msg.setText("Remote added");
-			txt.setText(Integer.toString((e.getRemoteNew())));
+			txt.setText(Integer.toString(e.getRemoteNew()));
 			break;
 		case 5:
 			msg.setText("Local deleted");
-			txt.setText(Integer.toString((e.getLocalDeleted())));
+			txt.setText(Integer.toString(e.getLocalDeleted()));
 			break;
 		case 6:
 			msg.setText("Remote deleted");
-			txt.setText(Integer.toString((e.getRemoteDeleted())));
+			txt.setText(Integer.toString(e.getRemoteDeleted()));
 			break;
 		case 7:
 			msg.setText("Confliced");
-			txt.setText(Integer.toString((e.getConflicted())));
+			txt.setText(Integer.toString(e.getConflicted()));
 			break;
 		case 8:
 			msg.setText("Errors");
-			txt.setText(Integer.toString((e.getErrors())));
+			txt.setText(Integer.toString(e.getErrors()));
+			break;
+		case 9:
+			msg.setText("Fatal Error:");
+			txt.setText(e.getFatalErrorMsg());
 			break;
 		}
 		return v;
@@ -124,7 +130,16 @@ public class StatusListAdapter extends BaseExpandableListAdapter
 
 	public int getChildrenCount(int groupPosition)
 	{
-		return 9;
+		StatusEntry e = statusList.get(groupPosition);
+		String m = e.getFatalErrorMsg();
+		if (m == null || "".equals(m))
+		{
+			return 9;
+		}
+		else
+		{
+			return 10;
+		}
 	}
 
 	public Object getGroup(int groupPosition)
