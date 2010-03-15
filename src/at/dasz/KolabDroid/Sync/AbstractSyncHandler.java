@@ -268,6 +268,8 @@ public abstract class AbstractSyncHandler implements SyncHandler
 		result.setSentDate(sync.getCacheEntry().getRemoteChangedDate());
 		result.setFrom(new InternetAddress("kolab-android@dasz.at"));
 		result.setRecipient(RecipientType.TO, new InternetAddress("kolab-android@dasz.at"));
+		result.setHeader("User-Agent", "kolab-android 0.1");
+		result.setHeader("X-Kolab-Type", getMimeType());
 		MimeMultipart mp = new MimeMultipart();
 		MimeBodyPart txt = new MimeBodyPart();
 		txt.setText(getMessageBodyText(sync), "utf-8");
