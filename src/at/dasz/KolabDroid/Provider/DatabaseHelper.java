@@ -118,7 +118,8 @@ public class DatabaseHelper extends SQLiteOpenHelper
 				StatusProvider.COL_localDeleted + " INTEGER",
 				StatusProvider.COL_remoteDeleted + " INTEGER",
 				StatusProvider.COL_conflicted + " INTEGER",
-				StatusProvider.COL_errors + " INTEGER",});
+				StatusProvider.COL_errors + " INTEGER",
+				StatusProvider.COL_fatalErrorMsg  + " TEXT",});
 
 		db.execSQL("CREATE TABLE " + StatusProvider.STATUS_TABLE_NAME + " (" + stat_columns
 				+ ");");
