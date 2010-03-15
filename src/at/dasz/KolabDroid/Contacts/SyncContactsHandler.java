@@ -104,6 +104,8 @@ public class SyncContactsHandler extends AbstractSyncHandler
 		}
 		Element root = xml.getDocumentElement();
 
+		contact.setUid(Utils.getXmlElementString(root, "uid"));
+
 		Element name = Utils.getXmlElement(root, "name");
 		if (name != null)
 		{
@@ -148,6 +150,8 @@ public class SyncContactsHandler extends AbstractSyncHandler
 		Utils.setXmlElementValue(xml, root, "last-modification-date", Utils
 				.toUtc(lastChanged));
 
+		Utils.setXmlElementValue(xml, root, "uid", source.getUid());
+
 		Element name = Utils.getOrCreateXmlElement(xml, root, "name");
 		Utils.setXmlElementValue(xml, name, "full-name", source.getFullName());
 
@@ -172,7 +176,8 @@ public class SyncContactsHandler extends AbstractSyncHandler
 		entry.setRemoteChangedDate(lastChanged);
 		final String newUid = getNewUid();
 		entry.setRemoteId(newUid);
-
+		source.setUid(newUid);
+		
 		Document xml = Utils.newDocument("contact");
 		writeXml(xml, source, lastChanged);
 
@@ -263,6 +268,7 @@ public class SyncContactsHandler extends AbstractSyncHandler
 		CacheEntry result = new CacheEntry();
 		result.setLocalId((int) ContentUris.parseId(uri));
 		result.setLocalHash(contact.getLocalHash());
+		result.setRemoteId(contact.getUid());
 		return result;
 	}
 
@@ -283,6 +289,8 @@ public class SyncContactsHandler extends AbstractSyncHandler
 			if (!personCursor.moveToFirst()) return null;
 			Contact result = new Contact();
 			result.setId(sync.getCacheEntry().getLocalId());
+			result.setUid(sync.getCacheEntry().getRemoteId());
+			
 			final int nameIdx = personCursor.getColumnIndex(People.NAME);
 			result.setFullName(personCursor.getString(nameIdx));
 
@@ -339,7 +347,7 @@ public class SyncContactsHandler extends AbstractSyncHandler
 	private String getNewUid()
 	{
 		// Create Application and Type specific id
-		// kd == Kolab Droid
+		// kd == Kolab Droid, ct = contact
 		return "kd-ct-" + UUID.randomUUID().toString();
 	}
 
@@ -349,7 +357,8 @@ public class SyncContactsHandler extends AbstractSyncHandler
 		Contact contact = getLocalItem(sync);
 		StringBuilder sb = new StringBuilder();
 
-		sb.append(contact.getFullName());
+		String fullName =contact.getFullName(); 
+		sb.append(fullName == null ? "(no name)" : fullName);
 		sb.append("\n");
 		sb.append("----- Contact Methods -----\n");
 		for (ContactMethod cm : contact.getContactMethods())

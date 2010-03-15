@@ -33,23 +33,31 @@ import at.dasz.KolabDroid.Utils;
 public class Contact
 {
 	private int					id;
-	private String				fullName;
+	private String				fullName, uid;
 
 	private List<ContactMethod>	contactMethods	= new ArrayList<ContactMethod>();
 	
 	public int getId() {
 		return id;
 	}
+	
 	public void setId(int id) {
 		this.id = id;
 	}
 
+	public String getUid() {
+		return uid;
+	}
+	
+	public void setUid(String uid) {
+		this.uid = uid;
+	}
 
 	public void setFullName(String fullName)
 	{
 		this.fullName = fullName;
 	}
-
+	
 	public String getFullName()
 	{
 		return fullName;

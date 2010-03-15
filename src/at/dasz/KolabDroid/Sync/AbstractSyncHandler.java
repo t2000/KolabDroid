@@ -36,6 +36,8 @@ import javax.mail.MessagingException;
 import javax.mail.MultipartDataSource;
 import javax.mail.Session;
 import javax.mail.Flags.Flag;
+import javax.mail.Message.RecipientType;
+import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
@@ -66,6 +68,15 @@ public abstract class AbstractSyncHandler implements SyncHandler
 
 	protected abstract String getMimeType();
 
+	/**
+	 * Called by createServerItemFromLocal() to create the necessary XML describing the item.
+	 * 
+	 * @param sync
+	 * @return
+	 * @throws ParserConfigurationException
+	 * @throws SyncException
+	 * @throws MessagingException
+	 */
 	protected abstract String writeXml(SyncContext sync)
 			throws ParserConfigurationException, SyncException, MessagingException;
 
@@ -149,8 +160,8 @@ public abstract class AbstractSyncHandler implements SyncHandler
 		// initialize cache entry with values that should go
 		// into the new server item
 		CacheEntry entry = new CacheEntry();
-		sync.setCacheEntry(entry);
 		entry.setLocalId(localId);
+		sync.setCacheEntry(entry);
 
 		String xml = writeXml(sync);
 		Message m = wrapXmlInMessage(session, sync, xml);
@@ -255,6 +266,8 @@ public abstract class AbstractSyncHandler implements SyncHandler
 		Message result = new MimeMessage(session);
 		result.setSubject(sync.getCacheEntry().getRemoteId());
 		result.setSentDate(sync.getCacheEntry().getRemoteChangedDate());
+		result.setFrom(new InternetAddress("kolab-android@dasz.at"));
+		result.setRecipient(RecipientType.TO, new InternetAddress("kolab-android@dasz.at"));
 		MimeMultipart mp = new MimeMultipart();
 		MimeBodyPart txt = new MimeBodyPart();
 		txt.setText(getMessageBodyText(sync), "utf-8");
