@@ -48,31 +48,31 @@ public class CalendarProvider
 	{
 		this.cr = cr;
 	}
+//
+//	public List<CalendarEntry> loadAllCalendarEntries(int calendar_id) throws SyncException
+//	{
+//		List<CalendarEntry> result = new ArrayList<CalendarEntry>();
+//
+//		Cursor cur = cr.query(CALENDAR_URI, projection, null, null, null);
+//		if (cur == null) throw new SyncException(Integer.toString(calendar_id), "cr.query returned null");
+//		try
+//		{
+//			if (cur.moveToFirst())
+//			{
+//				do
+//				{
+//					result.add(loadCalendarEntry(cur));
+//				} while (cur.moveToNext());
+//			}
+//			return result;
+//		}
+//		finally
+//		{
+//			cur.close();
+//		}
+//	}
 
-	public List<CalendarEntry> loadAllCalendarEntries(int calendar_id) throws SyncException
-	{
-		List<CalendarEntry> result = new ArrayList<CalendarEntry>();
-
-		Cursor cur = cr.query(CALENDAR_URI, projection, null, null, null);
-		if (cur == null) throw new SyncException(Integer.toString(calendar_id), "cr.query returned null");
-		try
-		{
-			if (cur.moveToFirst())
-			{
-				do
-				{
-					result.add(loadCalendarEntry(cur));
-				} while (cur.moveToNext());
-			}
-			return result;
-		}
-		finally
-		{
-			cur.close();
-		}
-	}
-
-	public CalendarEntry loadCalendarEntry(int id) throws SyncException
+	public CalendarEntry loadCalendarEntry(int id, String uid) throws SyncException
 	{
 		if (id == 0) return null;
 		Uri uri = ContentUris.withAppendedId(CALENDAR_URI, id);
@@ -80,7 +80,7 @@ public class CalendarProvider
 		if (cur == null) throw new SyncException(Integer.toString(id), "cr.query returned null");
 		try
 		{
-			if (cur.moveToFirst()) { return loadCalendarEntry(cur); }
+			if (cur.moveToFirst()) { return loadCalendarEntry(cur, uid); }
 			return null;
 		}
 		finally
@@ -89,10 +89,11 @@ public class CalendarProvider
 		}
 	}
 
-	private CalendarEntry loadCalendarEntry(Cursor cur)
+	private CalendarEntry loadCalendarEntry(Cursor cur, String uid)
 	{
 		CalendarEntry e = new CalendarEntry();
 		e.setId(cur.getInt(0));
+		e.setUid(uid);
 		e.setCalendar_id(cur.getInt(1));
 		e.setTitle(cur.getString(2));
 		e.setAllDay(cur.getInt(3) != 0);

@@ -45,6 +45,7 @@ public class CalendarEntry
 	private int					visibility;
 	private int					hasAlarm;
 	private String				rRule;
+	private String				uid;
 
 	public int getId()
 	{
@@ -54,6 +55,14 @@ public class CalendarEntry
 	public void setId(int id)
 	{
 		this.id = id;
+	}
+
+	public String getUid() {
+		return uid;
+	}
+
+	public void setUid(String uid) {
+		this.uid = uid;
 	}
 
 	public int getCalendar_id()

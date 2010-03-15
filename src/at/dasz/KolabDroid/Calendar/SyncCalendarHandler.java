@@ -122,6 +122,7 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 		}
 		Element root = xml.getDocumentElement();
 
+		cal.setUid(Utils.getXmlElementString(root, "uid"));
 		cal.setDescription(Utils.getXmlElementString(root, "body"));
 		cal.setTitle(Utils.getXmlElementString(root, "summary"));
 		cal.setEventLocation(Utils.getXmlElementString(root, "location"));
@@ -224,13 +225,14 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 		CacheEntry result = new CacheEntry();
 		result.setLocalId(cal.getId());
 		result.setLocalHash(cal.getLocalHash());
+		result.setRemoteId(cal.getUid());
 		return result;
 	}
 
 	private String getNewUid()
 	{
 		// Create Application and Type specific id
-		// kd == Kolab Droid
+		// kd == Kolab Droid, ev == event
 		return "kd-ev-" + UUID.randomUUID().toString();
 	}
 
@@ -272,6 +274,7 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 	{
 		Element root = xml.getDocumentElement();
 
+		Utils.setXmlElementValue(xml, root, "uid", source.getUid());
 		Utils.setXmlElementValue(xml, root, "body", source.getDescription());
 		Utils.setXmlElementValue(xml, root, "last-modification-date", Utils
 				.toUtc(lastChanged));
@@ -409,6 +412,7 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 		entry.setRemoteChangedDate(lastChanged);
 		final String newUid = getNewUid();
 		entry.setRemoteId(newUid);
+		source.setUid(newUid);
 
 		Document xml = Utils.newDocument("event");
 		writeXml(xml, source, lastChanged);
@@ -421,7 +425,7 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 		if (sync.getLocalItem() != null) return (CalendarEntry) sync
 				.getLocalItem();
 		CalendarEntry c = calendarProvider.loadCalendarEntry(sync
-				.getCacheEntry().getLocalId());
+				.getCacheEntry().getLocalId(), sync.getCacheEntry().getRemoteId());
 		sync.setLocalItem(c);
 		return c;
 	}
