@@ -22,6 +22,7 @@
 package at.dasz.KolabDroid.Provider;
 
 import android.content.Context;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
@@ -34,10 +35,10 @@ import at.dasz.KolabDroid.Utils;
 public class DatabaseHelper extends SQLiteOpenHelper
 {
 	private final static String		DATABASE_NAME				= "KolabDroid.db";
-	private final static int		DATABASE_VERSION			= 5;
+	private final static int		DATABASE_VERSION			= 6;
 	
-	public final static String			COL_ID						= "_id";
-	public final static int				COL_IDX_ID					= 0;
+	public final static String		COL_ID						= "_id";
+	public final static int			COL_IDX_ID					= 0;
 	
 	public static final String[]	ID_PROJECTION				= new String[] { COL_ID };
 
@@ -73,15 +74,33 @@ public class DatabaseHelper extends SQLiteOpenHelper
 				// Add alter statements for version upgrade 4 to 5
 				// Add error message column
 				db.execSQL("ALTER TABLE " + StatusProvider.STATUS_TABLE_NAME + " ADD " + StatusProvider.COL_fatalErrorMsg  + " TEXT");
-				// Next version, continue upgrade
-				oldVersion = 5;
+				// skip version 5, which only contains a patch for DBs that were wrongly created with version 5 but a v4 schema
+				oldVersion = 6;
 			}
 			if(oldVersion == 5)
 			{
 				// Add alter statements for version upgrade 5 to 6
-				// ...
+				try
+				{
+					// retry adding the error message column. This should fix
+					// already installed broken databases.
+					db.execSQL("ALTER TABLE "
+							+ StatusProvider.STATUS_TABLE_NAME + " ADD "
+							+ StatusProvider.COL_fatalErrorMsg + " TEXT");
+				}
+				catch (SQLException ex)
+				{
+					// ignore
+				}
 				// Next version, continue upgrade
 				oldVersion = 6;
+			}
+			if(oldVersion == 6)
+			{
+				// Add alter statements for version upgrade 6 to 7
+				// ...
+				// Next version, continue upgrade
+				oldVersion = 7;
 			}
 		}
 		else
