@@ -21,9 +21,6 @@
 
 package at.dasz.KolabDroid.Calendar;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
