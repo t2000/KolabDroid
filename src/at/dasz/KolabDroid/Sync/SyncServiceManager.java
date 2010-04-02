@@ -26,6 +26,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
+/**
+ * Part of the infrastructure to keep the background worker alive.
+ */
 public class SyncServiceManager extends BroadcastReceiver
 {
 	public static final String	TAG	= "SyncServiceManager";

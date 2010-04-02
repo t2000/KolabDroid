@@ -46,6 +46,9 @@ import at.dasz.KolabDroid.Provider.LocalCacheProvider;
 import at.dasz.KolabDroid.Provider.StatusProvider;
 import at.dasz.KolabDroid.Settings.Settings;
 
+/**
+ * The background worker that implements the main synchronization algorithm. 
+ */
 public class SyncWorker extends BaseWorker
 {
 	// Not final to avoid warnings

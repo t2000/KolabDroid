@@ -33,6 +33,10 @@ import at.dasz.KolabDroid.Utils;
 import at.dasz.KolabDroid.Provider.DatabaseHelper;
 import at.dasz.KolabDroid.Provider.LocalCacheProvider;
 
+/**
+ * This class creates and keeps the connections between local and remote items.
+ * The contained information can be used to recognize changes of items.
+ */
 public class CacheEntry
 {
 

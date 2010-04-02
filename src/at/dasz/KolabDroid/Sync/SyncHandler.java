@@ -31,18 +31,52 @@ import javax.xml.parsers.ParserConfigurationException;
 import android.database.Cursor;
 import at.dasz.KolabDroid.Provider.LocalCacheProvider;
 
+/**
+ * This interface defines the necessary operations to be able to synchronize a 
+ * local data store with a kolab imap folder. Common tasks are already 
+ * implemented in the AbstractSyncHandler, which is the recommended base class
+ * for all implementors of this interface.
+ */
 public interface SyncHandler
 {
+	/**
+	 * Retrieves the current status of this data store.
+	 * @return
+	 */
 	public StatusEntry getStatus();
 	
+	/**
+	 * Retrieves a list of all local items.
+	 * @return
+	 */
 	public abstract Cursor getAllLocalItemsCursor();
 
+	/**
+	 * Returns the local ID column index of the specified cursor 
+	 * @param c
+	 * @return
+	 */
 	public abstract int getIdColumnIndex(Cursor c);
 
+	/**
+	 * Returns the folder name where the items are stored in the IMAP server.
+	 * @return
+	 */
 	public abstract String getDefaultFolderName();
 
+	/**
+	 * Returns the local cache provider for this data store.
+	 * @return
+	 */
 	public abstract LocalCacheProvider getLocalCacheProvider();
 
+	/**
+	 * Returns true, if the specified item exists in the local data store.
+	 * @param sync the SyncContext, the CacheEntry has to be set
+	 * @return
+	 * @throws SyncException
+	 * @throws MessagingException
+	 */
 	public abstract boolean hasLocalItem(SyncContext sync) throws SyncException, MessagingException;
 
 	/**

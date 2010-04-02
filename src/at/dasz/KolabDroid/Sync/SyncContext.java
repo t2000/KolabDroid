@@ -23,6 +23,10 @@ package at.dasz.KolabDroid.Sync;
 
 import javax.mail.Message;
 
+/**
+ * A "cursor" item for the currently synchronized item. Keeps references to the 
+ * actual object, the CacheEntry and the Message.
+ */
 public class SyncContext
 {
 	private Object localItem = null;

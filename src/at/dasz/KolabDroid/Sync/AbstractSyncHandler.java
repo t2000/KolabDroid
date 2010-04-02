@@ -52,6 +52,10 @@ import android.text.format.Time;
 import android.util.Log;
 import at.dasz.KolabDroid.Utils;
 
+/**
+ * This class contains common code for all local data stores and defines the 
+ * store-specific functionality that has to be implemented by the store.
+ */
 public abstract class AbstractSyncHandler implements SyncHandler
 {
 	protected AbstractSyncHandler(Context context)
@@ -69,10 +73,10 @@ public abstract class AbstractSyncHandler implements SyncHandler
 	protected abstract String getMimeType();
 
 	/**
-	 * Called by createServerItemFromLocal() to create the necessary XML describing the item.
+	 * Create the XML in kolab format to describe the specified item.
 	 * 
 	 * @param sync
-	 * @return
+	 * @return String containing the XML describing the item
 	 * @throws ParserConfigurationException
 	 * @throws SyncException
 	 * @throws MessagingException
@@ -80,16 +84,48 @@ public abstract class AbstractSyncHandler implements SyncHandler
 	protected abstract String writeXml(SyncContext sync)
 			throws ParserConfigurationException, SyncException, MessagingException;
 
+	/**
+	 * Create a human readable description of the specified item to be displayed
+	 * as text/plain part in the mail.  
+	 * @param sync
+	 * @return
+	 * @throws SyncException
+	 * @throws MessagingException
+	 */
 	protected abstract String getMessageBodyText(SyncContext sync) throws SyncException, MessagingException;
 
+	/**
+	 * Create a short human readable string describing an item for log messages.
+	 * @param sync
+	 * @return
+	 * @throws MessagingException
+	 */
 	public abstract String getItemText(SyncContext sync) throws MessagingException;
 
+	/**
+	 * Update the local item from the specified XML Document. 
+	 * @param sync
+	 * @param xml
+	 * @throws SyncException
+	 */
 	protected abstract void updateLocalItemFromServer(SyncContext sync,
 			Document xml) throws SyncException;
 
+	/**
+	 * Update the specified XML Document from the local item.
+	 * @param sync
+	 * @param xml
+	 * @throws SyncException
+	 * @throws MessagingException
+	 */
 	protected abstract void updateServerItemFromLocal(SyncContext sync,
 			Document xml) throws SyncException, MessagingException;
 
+	/**
+	 * Delete the local item with the specified ID.
+	 * @param localId
+	 * @throws SyncException
+	 */
 	public abstract void deleteLocalItem(int localId) throws SyncException;
 
 	public StatusEntry getStatus()

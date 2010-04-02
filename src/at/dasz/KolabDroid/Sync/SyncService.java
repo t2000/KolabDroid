@@ -27,6 +27,9 @@ import android.util.Log;
 
 import com.commonsware.cwac.wakeful.WakefulIntentService;
 
+/**
+ * Part of the infrastructure to keep the background worker alive.
+ */
 public class SyncService extends WakefulIntentService
 {
 	public SyncService()

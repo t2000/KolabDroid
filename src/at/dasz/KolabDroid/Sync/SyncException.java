@@ -1,5 +1,8 @@
 package at.dasz.KolabDroid.Sync;
 
+/**
+ * Application-specific exception.
+ */
 public class SyncException extends Exception
 {
 	private static final long	serialVersionUID	= -4204603757536693989L;

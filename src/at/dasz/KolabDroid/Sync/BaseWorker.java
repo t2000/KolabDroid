@@ -24,6 +24,9 @@ package at.dasz.KolabDroid.Sync;
 import android.content.Context;
 import at.dasz.KolabDroid.R;
 
+/**
+ * Basic threading and status management.
+ */
 public abstract class BaseWorker
 {
 	private final static String	SYNC_ROOT	= "SYNC_BaseWorker";

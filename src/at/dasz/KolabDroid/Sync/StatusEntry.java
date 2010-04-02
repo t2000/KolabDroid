@@ -27,6 +27,9 @@ import android.text.format.Time;
 import at.dasz.KolabDroid.Provider.DatabaseHelper;
 import at.dasz.KolabDroid.Provider.StatusProvider;
 
+/**
+ * Describes a log entry.
+ */
 public class StatusEntry
 {
 	private long	id;
