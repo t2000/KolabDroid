@@ -173,6 +173,9 @@ public class SyncWorker extends BaseWorker
 
 			StatusHandler.writeStatus(R.string.fetching_messages);
 
+			// Numbers in comments and messages reference Gargan's Algorithm and
+			// the wiki
+			
 			// 1. retrieve list of all imap message headers
 			sourceFolder = server.getFolder(handler.getDefaultFolderName());
 			sourceFolder.open(Folder.READ_WRITE);
@@ -272,12 +275,12 @@ public class SyncWorker extends BaseWorker
 							{
 								Log
 										.i("sync",
-												"local changes found: conflicting, updating local item from server");
+												"7.c local changes found: conflicting, updating local item from server");
 								status.incrementConflicted();
 							}
 							else
 							{
-								Log.i("sync", "no local changes found:"
+								Log.i("sync", "7.b no local changes found:"
 										+ " updating local item from server");
 							}
 							status.incrementLocalChanged();
