@@ -21,9 +21,12 @@
 
 package at.dasz.KolabDroid.Sync;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.SystemClock;
 import android.util.Log;
 
 /**
@@ -31,14 +34,30 @@ import android.util.Log;
  */
 public class SyncServiceManager extends BroadcastReceiver
 {
-	public static final String	TAG	= "SyncServiceManager";
+	public static final String	TAG				= "SyncServiceManager";
+	private static final int	INITIAL_DELAY	= 1000 * 60 * 10; // 10 minutes
+	private static final int	SLEEP_TIME		= 1000 * 60 * 60 * 3; // 3 hours
+	private static final String	CRON_TRIGGER	= "at.dasz.KolabDroid.Sync.CRON_TRIGGER";
 
 	@Override
 	public void onReceive(Context context, Intent intent)
 	{
 		if ("android.intent.action.BOOT_COMPLETED".equals(intent.getAction()))
 		{
-			// TODO: Add alarm manager
+			AlarmManager mgr = (AlarmManager) context
+					.getSystemService(Context.ALARM_SERVICE);
+			Intent i = new Intent(CRON_TRIGGER, null, context,
+					SyncServiceManager.class);
+			PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
+
+			mgr.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock
+					.elapsedRealtime()
+					+ INITIAL_DELAY, SLEEP_TIME, pi);
+		}
+		else if (CRON_TRIGGER.equals(intent.getAction()))
+		{
+			Log.i(TAG, "Starting synchronization from CRON");
+			SyncService.startSync(context);
 		}
 		else
 		{
