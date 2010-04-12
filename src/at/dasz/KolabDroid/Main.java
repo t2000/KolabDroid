@@ -39,6 +39,7 @@ import at.dasz.KolabDroid.Provider.StatusProvider;
 import at.dasz.KolabDroid.Sync.BaseWorker;
 import at.dasz.KolabDroid.Sync.ResetService;
 import at.dasz.KolabDroid.Sync.SyncService;
+import at.dasz.KolabDroid.Sync.SyncServiceManager;
 
 public class Main extends Activity implements MainActivity {
 	
@@ -71,6 +72,9 @@ public class Main extends Activity implements MainActivity {
 		statusListView.setAdapter(statusAdapter);
 		
 		bindStatus();
+		
+		// Ensure that the Alarm Manager is active
+		SyncServiceManager.initAlarmManager(this);
 	}
 	
     @Override

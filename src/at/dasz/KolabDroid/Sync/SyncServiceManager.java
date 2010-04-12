@@ -44,15 +44,7 @@ public class SyncServiceManager extends BroadcastReceiver
 	{
 		if ("android.intent.action.BOOT_COMPLETED".equals(intent.getAction()))
 		{
-			AlarmManager mgr = (AlarmManager) context
-					.getSystemService(Context.ALARM_SERVICE);
-			Intent i = new Intent(CRON_TRIGGER, null, context,
-					SyncServiceManager.class);
-			PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
-
-			mgr.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock
-					.elapsedRealtime()
-					+ INITIAL_DELAY, SLEEP_TIME, pi);
+			initAlarmManager(context);
 		}
 		else if (CRON_TRIGGER.equals(intent.getAction()))
 		{
@@ -63,5 +55,24 @@ public class SyncServiceManager extends BroadcastReceiver
 		{
 			Log.e(TAG, "Received unexpected intent " + intent.toString());
 		}
+	}
+
+	/**
+	 * Initializes the Alarm Manager
+	 * This Method can be called more than once.
+	 * An existing repeating Intent will be replaced.
+	 * */
+	public static void initAlarmManager(Context context)
+	{
+		AlarmManager mgr = (AlarmManager) context
+				.getSystemService(Context.ALARM_SERVICE);
+		Intent i = new Intent(CRON_TRIGGER, null, context,
+				SyncServiceManager.class);
+		PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
+
+		// From Android Documentation: If there is already an alarm scheduled for the same IntentSender, it will first be canceled.
+		mgr.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock
+				.elapsedRealtime()
+				+ INITIAL_DELAY, SLEEP_TIME, pi);
 	}
 }
