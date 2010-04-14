@@ -2,6 +2,8 @@ package at.dasz.KolabDroid.Contacts;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.Serializable;
+import java.util.ArrayList;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -13,8 +15,13 @@ import android.provider.Contacts;
 import android.provider.Contacts.People;
 import at.dasz.KolabDroid.Utils;
 
-public class ContactEntry implements Comparable<ContactEntry>
+public class ContactEntry implements Comparable<ContactEntry>, Serializable
 {
+
+	/**
+	 * for serialization
+	 */
+	private static final long	serialVersionUID	= 857231805984141277L;
 
 	/**
 	 * holds the data as StringBuffer
@@ -36,51 +43,53 @@ public class ContactEntry implements Comparable<ContactEntry>
 	 */
 	public String[] fields = new String[50];
 	
+	public ArrayList<String> additonalEmail = new ArrayList<String>();
+	
 	private static final int	DisplayName=0;
 	private static final int	FirstName = 1;
 	private static final int	LastName = 2;
-	private static final int	PreferMailFormat	=5;
-	private static final int	JobTitle	= 6;
-	private static final int	NickName	= 7;
-	private static final int	PrimaryEmail	= 8;
-	private static final int	SecondEmail	= 9;
-	private static final int	Category	= 10;
-	private static final int	Company	= 11;
-	private static final int	CellularNumber	= 12;
-	private static final int	HomePhone	= 13;
-	private static final int	FaxNumber	= 14;
-	private static final int	WorkPhone	= 15;
-	private static final int	PagerNumber	= 16;
-	private static final int	BirthYear	= 17;
-	private static final int	BirthMonth	= 18;
-	private static final int	BirthDay	= 19;
-	private static final int	AnniversaryYear	= 20;
-	private static final int	AnniversaryMonth	= 21;
-	private static final int	AnniversaryDay	= 22;
-	private static final int	PhotoName	= 23;
-	private static final int	Notes	= 24;
-	private static final int	Department	= 25;
-	private static final int	WebPage1	= 26;
-	private static final int	WebPage2	= 27;
-	private static final int	Custom1	= 28;
-	private static final int	Custom2	= 29;
-	private static final int	Custom3	= 30;
-	private static final int	Custom4	= 31;
-	private static final int	AimScreenName	= 32;
-	private static final int	AllowRemoteContent	= 33;
-	private static final int	HomeAddress	= 34;
-	private static final int	HomeAddress2	= 35;
-	private static final int	HomeCity	= 36;
-	private static final int	HomeState	= 37;
-	private static final int	HomeZipCode	= 38;
-	private static final int	HomeCountry	= 39;
-	private static final int	WorkAddress	= 40;
-	private static final int	WorkAddress2	= 41;
-	private static final int	WorkCity	= 42;
-	private static final int	WorkState	= 43;
-	private static final int	WorkZipCode	= 44;
-	private static final int	WorkCountry	= 45;
-	
+	private static final int	PreferMailFormat	=3;
+	private static final int	JobTitle	= 4;
+	private static final int	NickName	= 5;
+	private static final int	PrimaryEmail	= 6;
+	private static final int	SecondEmail	= 7;
+	private static final int	Category	= 8;
+	private static final int	Company	= 9;
+	private static final int	CellularNumber	= 10;
+	private static final int	HomePhone	= 11;
+	private static final int	FaxNumber	= 12;
+	private static final int	WorkPhone	= 13;
+	private static final int	PagerNumber	= 14;
+	private static final int	BirthYear	= 15;
+	private static final int	BirthMonth	= 16;
+	private static final int	BirthDay	= 17;
+	private static final int	AnniversaryYear	= 18;
+	private static final int	AnniversaryMonth	= 19;
+	private static final int	AnniversaryDay	= 20;
+	private static final int	PhotoName	= 21;
+	private static final int	Notes	= 22;
+	private static final int	Department	= 23;
+	private static final int	WebPage1	= 24;
+	private static final int	WebPage2	= 25;
+	private static final int	Custom1	= 26;
+	private static final int	Custom2	= 27;
+	private static final int	Custom3	= 28;
+	private static final int	Custom4	= 29;
+	private static final int	AimScreenName	= 30;
+	private static final int	AllowRemoteContent	= 31;
+	private static final int	HomeAddress	= 32;
+	private static final int	HomeAddress2	= 33;
+	private static final int	HomeCity	= 34;
+	private static final int	HomeState	= 35;
+	private static final int	HomeZipCode	= 36;
+	private static final int	HomeCountry	= 37;
+	private static final int	WorkAddress	= 38;
+	private static final int	WorkAddress2	= 39;
+	private static final int	WorkCity	= 40;
+	private static final int	WorkState	= 41;
+	private static final int	WorkZipCode	= 42;
+	private static final int	WorkCountry	= 43;
+
 	
 	private static final String MAIL_FORMAT_UNKNOWN = "0";
 	private static final String MAIL_FORMAT_PLAINTEXT = "1";
@@ -98,6 +107,11 @@ public class ContactEntry implements Comparable<ContactEntry>
 			fields[i] = null;
 	}
 	
+	/**
+	 * checks if a property exists
+	 * @param prop the property index to check
+	 * @return true if the property is valid
+	 */
 	private boolean haveProperty(int prop) {
 		return this.fields[prop]!=null && !this.fields[prop].equals("");
 	}
@@ -111,6 +125,10 @@ public class ContactEntry implements Comparable<ContactEntry>
 	 * @param b TODO: why to we need this?
 	 */
 	private void nodeWithContent (StringBuffer xml, String node, String content, boolean b) {
+		// skip empty nodes
+		if (node == null || content == null)
+			return;
+		
 		xml.append('<');
 		xml.append(node);
 		xml.append('>');
@@ -244,14 +262,12 @@ public class ContactEntry implements Comparable<ContactEntry>
 		if (this.haveProperty(BirthYear) && this.haveProperty(BirthMonth) && this.haveProperty(BirthDay))
 		{
 			String adate = getProperty(BirthYear) + "-" + getProperty(BirthMonth) + "-" + getProperty(BirthDay);
-			if (adate != "--" && adate != "null-null-null")
-				nodeWithContent(xml, "birthday", adate, false);
+			nodeWithContent(xml, "birthday", adate, false);
 		}
 		if(this.haveProperty(AnniversaryYear) && this.haveProperty(AnniversaryMonth) && this.haveProperty(AnniversaryDay))
 		{
 			String adate = getProperty(AnniversaryYear) + "-" + getProperty(AnniversaryMonth) + "-" + getProperty(AnniversaryDay);
-			if (adate != "--" && adate != "null-null-null")
-				nodeWithContent(xml, "anniversary", adate, false);
+			nodeWithContent(xml, "anniversary", adate, false);
 		}
 		if (this.haveProperty(HomePhone))
 		{	
@@ -423,9 +439,13 @@ public class ContactEntry implements Comparable<ContactEntry>
 				this.setProperty(FirstName, Utils.getXmlElementString(cur, "GIVEN-NAME"));
 				this.setProperty(LastName, Utils.getXmlElementString(cur, "LAST-NAME"));
 				found = true;
+				continue;
 			}
 			if (name.equals("PREFER-MAIL-FORMAT")) {
-				String format = cur.getNodeValue().toUpperCase();
+				String format = cur.getNodeValue();
+				if (format == null)
+					continue;
+				format = format.toUpperCase();
 				this.setProperty(PreferMailFormat, ContactEntry.MAIL_FORMAT_UNKNOWN);
 				if (format.equals("PLAINTEXT") || format.equals("TEXT") || format.equals("TXT") || format.equals("PLAIN") || format.equals("1"))
 					this.setProperty(PreferMailFormat, ContactEntry.MAIL_FORMAT_PLAINTEXT);
@@ -434,17 +454,15 @@ public class ContactEntry implements Comparable<ContactEntry>
 			}
 
 			if (name.equals("JOB-TITLE")) {
-				if (cur.getNodeValue() == null)
-					continue;
 				this.setProperty(JobTitle, cur.getNodeValue());
 				found = true;
+				continue;
 			}
 
 			if (name.equals("NICK-NAME")) {
-				if (cur.getNodeValue() == null)
-					continue;
 				this.setProperty(NickName, cur.getNodeValue());
 				found = true;
+				continue;
 			}
 
 			if (name.equals("EMAIL")) {
@@ -466,19 +484,18 @@ public class ContactEntry implements Comparable<ContactEntry>
 				}
 				email++;
 				found = true;
+				continue;
 			}
 			
 			if (name.equals("CATEGORIES")) {
-				if (cur.getNodeValue() == null)
-					continue;
 				this.setProperty(Category, cur.getNodeValue());
+				continue;
 			}
 
 			if (name.equals("ORGANIZATION")) {
-				if (cur.getNodeValue() == null)
-					continue;
 				this.setProperty(Company, cur.getNodeValue());
 				found = true;
+				continue;
 			}
 	
 	// these two are the same
@@ -526,8 +543,10 @@ public class ContactEntry implements Comparable<ContactEntry>
 				// BDAY: 1987-09-27
 				this.setProperty(BirthDay, tok[2]);
 				found = true;
+				continue;
 			}
-		// anniversary - not in vcard rfc??
+			
+			// anniversary - not in vcard rfc??
 			if (name.equals("ANNIVERSARY")) {
 				if (cur.getNodeValue() == null)
 					continue;
@@ -538,7 +557,9 @@ public class ContactEntry implements Comparable<ContactEntry>
 				// BDAY:1987-09-27T08:30:00-06:00
 				this.setProperty(AnniversaryDay, tok[2]);
 				found = true;
+				continue;
 			}
+			
 			if (name.equals("ADDRESS")) {
 				String type = Utils.getXmlElementString(cur, "TYPE");
 				if ("HOME".equalsIgnoreCase(type)) {
@@ -561,82 +582,71 @@ public class ContactEntry implements Comparable<ContactEntry>
 				found = true;
 			}
 			if (name.equals("PICTURE")) {
-				if (cur.getNodeValue() == null)
-					continue;
-				
-				// we should have a picture named /tmp/synckolab.img - this will be moved if we keep this contact
+				// TODO we should have a picture named /tmp/synckolab.img - this will be moved if we keep this contact
 				this.setProperty(PhotoName, cur.getNodeValue());
+				continue;
 			}
 			if (name.equals("BODY")) {
-				if (cur.getNodeValue() == null)
-					continue;
-				
 				String cnotes = cur.getNodeValue();
+				// bugfix for invalid client data
 				this.setProperty(Notes, cnotes.replaceAll("\\n", "\n"));
 				found = true;
+				continue;
 			}
 			if (name.equals("DEPARTMENT")) {
-				if (cur.getNodeValue() == null)
-					continue;
 				this.setProperty(Department, cur.getNodeValue());
 				found = true;
+				continue;
 			}
 
 			if (name.equals("WEB-PAGE")) {
-				if (cur.getNodeValue() == null)
-					continue;
 				this.setProperty(WebPage1, cur.getNodeValue());
 				found = true;
+				continue;
 			}
 		
 			if (name.equals("BUSINESS-WEB-PAGE")) {
-				if (cur.getNodeValue() == null)
-					continue;
 				this.setProperty(WebPage2, cur.getNodeValue());
 				found = true;
+				continue;
 			}
 
 			if (name.equals("UID")) {
-				if (cur.getNodeValue() == null)
-					continue;
 				uid = cur.getNodeValue();
+				continue;
 			}
 
 			if (name.equals("CUSTOM1")) {
-				if (cur.getNodeValue() == null)
-					continue;
 				this.setProperty(Custom1, cur.getNodeValue());
+				continue;
 			}
 
 			if (name.equals("CUSTOM2")) {
-				if (cur.getNodeValue() == null)
-					continue;
 				this.setProperty(Custom2, cur.getNodeValue());
+				continue;
 			}
 
 			if (name.equals("CUSTOM3")) {
-				if (cur.getNodeValue() == null)
-					continue;
 				this.setProperty(Custom3, cur.getNodeValue());
+				continue;
 			}
 
 			if (name.equals("CUSTOM4")) {
-				if (cur.getNodeValue() == null)
-					continue;
 				this.setProperty(Custom4, cur.getNodeValue());
+				continue;
 			}
 			
 			if (name.equals("IM-ADDRESS")) {
-				if (cur.getNodeValue() == null)
-					continue;
 				this.setProperty(AimScreenName, cur.getNodeValue());
+				continue;
 			}
 
 			if (name.equals("ALLOW-REMOTE-CONTENT")) {
-				if (cur.getNodeValue().toUpperCase().equals("TRUE"))
+				if ("TRUE".equalsIgnoreCase(cur.getNodeValue()))
 					this.setProperty(AllowRemoteContent, "true");
 				else
 					this.setProperty(AllowRemoteContent, "false");
+				continue;
 			}
 	
 			// end parsing
