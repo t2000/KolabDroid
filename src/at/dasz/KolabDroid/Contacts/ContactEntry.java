@@ -8,6 +8,9 @@ import org.w3c.dom.Element;
 
 import corinis.util.xml.ChildElementAdapter;
 
+import android.content.ContentValues;
+import android.provider.Contacts;
+import android.provider.Contacts.People;
 import at.dasz.KolabDroid.Utils;
 
 public class ContactEntry implements Comparable<ContactEntry>
@@ -23,12 +26,15 @@ public class ContactEntry implements Comparable<ContactEntry>
 	 */ 
 	Document xmlData;
 	
+	/**
+	 *  uid to identify this contact
+	 */
 	String uid;
 	
 	/**
-	 * Array of all known fields. These will be used for comparison as well
+	 * Array of all known fields. These will be used for comparison as well (see fieldnumber below)
 	 */
-	public String[] fields = new String[45];
+	public String[] fields = new String[50];
 	
 	private static final int	DisplayName=0;
 	private static final int	FirstName = 1;
@@ -88,6 +94,8 @@ public class ContactEntry implements Comparable<ContactEntry>
 	public ContactEntry (StringBuffer data, Document xmlData) {
 		this.data = data;
 		this.xmlData = xmlData;
+		for (int i =0; i< this.fields.length; i++)
+			fields[i] = null;
 	}
 	
 	private boolean haveProperty(int prop) {
@@ -114,15 +122,75 @@ public class ContactEntry implements Comparable<ContactEntry>
 		// add a newline
 		xml.append('\n'); 
 	}
+	
+
+	private void fillContentValues(ContentValues values, String key,
+			int field)
+	{
+		if (this.haveProperty(field))
+			values.put(key, this.getProperty(field));
+	}
 
 	public void readFromAndroid () {
 		// TODO: update the fields from android internally
 	}
 	
 	public void writeToAndroid () {
-		// TODO: write the data into android database
+		// default content
+		ContentValues contact = new ContentValues();
+		fillContentValues(contact, People.NAME, DisplayName);
+		//People.CONTENT_URI
+		//People.PRIMARY_EMAIL_ID
+		//People.PRIMARY_ORGANIZATION_ID
+		//People.PRIMARY_PHONE_ID
+		//People.IM_ACCOUNT
+		//People.NAME
+		//People.NOTES
+		//People.NUMBER
+		//People.TYPE_FAX_HOME
+		//People.TYPE_FAX_WORK
+		//People.TYPE_HOME
+		//People.TYPE_HOME
+		//People.TYPE_MOBILE
+		//People.TYPE_WORK
+		//People.TYPE_PAGER
+		//People.TYPE_OTHER
+		
+		//Contacts.KIND_POSTAL
+		
+		// emails
+		ContentValues data = new ContentValues();
+		data.put(Contacts.ContactMethods.KIND, Contacts.KIND_EMAIL);
+		data.put(Contacts.ContactMethods.TYPE, People.ContactMethods.TYPE_OTHER);
+		fillContentValues(data, Contacts.ContactMethods.DATA, PrimaryEmail);
+
+		data = new ContentValues();
+		data.put(Contacts.ContactMethods.KIND, Contacts.KIND_EMAIL);
+		data.put(Contacts.ContactMethods.TYPE, People.ContactMethods.TYPE_OTHER);
+		fillContentValues(data, Contacts.ContactMethods.DATA, SecondEmail);
+
+		// phone
+		data = new ContentValues();
+		data.put(Contacts.ContactMethods.KIND, Contacts.KIND_PHONE);
+		data.put(Contacts.ContactMethods.TYPE, People.ContactMethods.TYPE_HOME);
+		fillContentValues(data, Contacts.Phones.NUMBER, HomePhone);
+		
+
+		data = new ContentValues();
+		data.put(Contacts.ContactMethods.KIND, Contacts.KIND_PHONE);
+		data.put(Contacts.ContactMethods.TYPE, People.ContactMethods.TYPE_WORK);
+		fillContentValues(data, Contacts.Phones.NUMBER, WorkPhone);
+
+		data = new ContentValues();
+		data.put(Contacts.ContactMethods.KIND, Contacts.KIND_PHONE);
+		data.put(Contacts.ContactMethods.TYPE, People.ContactMethods.TYPE_OTHER);
+		fillContentValues(data, Contacts.Phones.NUMBER, CellularNumber);
+		
+		// postal is one string - max 4 lines in 1.6
+
 	}
 	
+
 	/**
 	 * @param xml the stringbuffer to create the xml into
 	 * @return a kolab xml representation in a stringbuffer
