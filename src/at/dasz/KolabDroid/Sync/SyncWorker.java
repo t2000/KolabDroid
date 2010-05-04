@@ -40,7 +40,7 @@ import android.util.Log;
 import at.dasz.KolabDroid.R;
 import at.dasz.KolabDroid.StatusHandler;
 import at.dasz.KolabDroid.Calendar.SyncCalendarHandler;
-import at.dasz.KolabDroid.Contacts.SyncContactsHandler;
+import at.dasz.KolabDroid.ContactsContract.SyncContactsHandler;
 import at.dasz.KolabDroid.Imap.ImapClient;
 import at.dasz.KolabDroid.Provider.LocalCacheProvider;
 import at.dasz.KolabDroid.Provider.StatusProvider;
@@ -264,6 +264,7 @@ public class SyncWorker extends BaseWorker
 										.i("sync",
 												"7.d entry missing => delete on server");
 								handler.deleteServerItem(sync);
+								status.incrementRemoteDeleted();
 							}
 						}
 						else
@@ -347,10 +348,11 @@ public class SyncWorker extends BaseWorker
 					{
 						Log
 								.i("sync",
-										"9.c not found in local cache: creating on server");
-						status.incrementRemoteNew();
+										"9.c not found in local cache: creating on server");						
 						handler.createServerItemFromLocal(session,
 								sourceFolder, sync, localId);
+						status.incrementRemoteNew();
+						processedEntries.add(localId);
 					}
 				}
 			}

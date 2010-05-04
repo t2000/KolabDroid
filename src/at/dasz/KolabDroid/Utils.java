@@ -131,6 +131,14 @@ public final class Utils
 			return (Element) nl.item(0);
 		}
 	}
+	
+	public static final Element createXmlElement(Document xml,
+			Element parent, String name)
+	{		
+			Element e = xml.createElement(name);
+			parent.appendChild(e);
+			return e;	
+	}
 
 	public static final Element getXmlElement(Element parent, String name)
 	{
