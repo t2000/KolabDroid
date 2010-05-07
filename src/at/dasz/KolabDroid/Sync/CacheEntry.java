@@ -21,13 +21,24 @@
 
 package at.dasz.KolabDroid.Sync;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Date;
 
+import javax.activation.DataSource;
+import javax.mail.BodyPart;
 import javax.mail.Message;
 import javax.mail.MessagingException;
+import javax.mail.MultipartDataSource;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.sax.Element;
 import android.util.Log;
 import at.dasz.KolabDroid.Utils;
 import at.dasz.KolabDroid.Provider.DatabaseHelper;
@@ -44,6 +55,7 @@ public class CacheEntry
 	private int	localId, remoteSize;
 	private long		remoteChangedDate;
 	private String	localHash, remoteId, remoteImapUid;
+	private byte[]	remoteHash;
 
 	public CacheEntry()
 	{
@@ -61,6 +73,7 @@ public class CacheEntry
 		setRemoteId(c.getString(LocalCacheProvider.COL_IDX_REMOTE_ID));
 		setRemoteImapUid(c
 				.getString(LocalCacheProvider.COL_IDX_REMOTE_IMAP_UID));
+		setRemoteHash(c.getBlob(LocalCacheProvider.COL_IDX_REMOTE_HASH));
 	}
 
 	public void setId(long rowId)
@@ -137,6 +150,16 @@ public class CacheEntry
 	{
 		return remoteImapUid;
 	}
+	
+	public byte[] getRemoteHash()
+	{
+		return remoteHash;
+	}
+
+	public void setRemoteHash(byte[] remoteHash)
+	{
+		this.remoteHash = remoteHash;
+	}
 
 	/**
 	 * Checks whether the specified CacheEntry and the Message are in sync.
@@ -154,9 +177,56 @@ public class CacheEntry
 		{
 			dt = Utils.getMailDate(message);
 		}
+		
+		InputStream is = null;
+		try
+		{
+			DataSource mainDataSource = message.getDataHandler()
+					.getDataSource();
+			if ((mainDataSource instanceof MultipartDataSource))
+			{
+
+				MultipartDataSource multipart = (MultipartDataSource) mainDataSource;
+				for (int idx = 0; idx < multipart.getCount(); idx++)
+				{
+					BodyPart p = multipart.getBodyPart(idx);
+	
+					if (!p.isMimeType("text/plain"))
+					{
+						is = p.getInputStream();
+						break;
+					}
+				}
+			}
+		}
+		catch (Exception ex)
+		{
+			ex.printStackTrace();
+		}
+		
+		boolean remoteHashIsSame = false;
+		
+		if(is != null)
+		{
+			Document doc = null;
+			try
+			{
+				doc = Utils.getDocument(is);
+				String docText = Utils.getXml(doc.getDocumentElement());			
+				byte[] remoteHash = Utils.sha1Hash(docText);
+				if(Arrays.equals(remoteHash, entry.getRemoteHash()))
+					remoteHashIsSame = true;
+			}
+			catch (Exception ex)
+			{
+				ex.printStackTrace();
+			}						
+		}
+		
 		boolean result = entry != null && message != null
 				&& entry.getRemoteChangedDate().equals(dt)
-				&& entry.getRemoteId().equals(message.getSubject());
+				&& entry.getRemoteId().equals(message.getSubject())
+				&& remoteHashIsSame;
 
 		if (!result)
 		{
@@ -195,6 +265,7 @@ public class CacheEntry
 		result.put(LocalCacheProvider.COL_LOCAL_HASH, getLocalHash());
 		result.put(LocalCacheProvider.COL_REMOTE_ID, getRemoteId());
 		result.put(LocalCacheProvider.COL_REMOTE_IMAP_UID, getRemoteImapUid());
+		result.put(LocalCacheProvider.COL_REMOTE_HASH, getRemoteHash());
 		return result;
 	}
 }

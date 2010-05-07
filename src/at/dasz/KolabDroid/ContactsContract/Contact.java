@@ -15,6 +15,17 @@ public class Contact
 	//private String				fullName, uid;
 	private String				uid;
 	private String				givenName, familyName;
+	private byte[]				remoteHash;
+
+	public byte[] getRemoteHash()
+	{
+		return remoteHash;
+	}
+
+	public void setRemoteHash(byte[] remoteHash)
+	{
+		this.remoteHash = remoteHash;
+	}
 
 	public String getGivenName()
 	{

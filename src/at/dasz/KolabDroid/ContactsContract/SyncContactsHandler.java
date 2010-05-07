@@ -30,7 +30,6 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
 
 import android.content.ContentProviderOperation;
@@ -38,7 +37,6 @@ import android.content.ContentProviderResult;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
-import android.content.ContentProviderOperation.Builder;
 //import android.content.ContentProviderOperation.Builder;
 import android.database.Cursor;
 import android.net.Uri;
@@ -156,6 +154,11 @@ public class SyncContactsHandler extends AbstractSyncHandler
 			contact.getContactMethods().add(cm);
 		}
 
+		//create hash of mail and attach to contact		
+		String docText = Utils.getXml(root);
+		byte[] remoteHash = Utils.sha1Hash(docText);		
+		contact.setRemoteHash(remoteHash);
+		
 		sync.setCacheEntry(saveContact(contact));
 	}
 
@@ -266,11 +269,10 @@ public class SyncContactsHandler extends AbstractSyncHandler
 		String email = "";
 		String phone = "";
 		
+		ArrayList<ContentProviderOperation> ops = new ArrayList<ContentProviderOperation>();
+		
 		if (contact.getId() == 0)
-		{
-			
-			ArrayList<ContentProviderOperation> ops = new ArrayList<ContentProviderOperation>();
-			
+		{	
 			ops.add(ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
 	                .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, null)
 	                .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, null)
@@ -346,15 +348,90 @@ public class SyncContactsHandler extends AbstractSyncHandler
 		{
 			//TODO: port this update process to new API
 			Log.i("II", "TODO: Contact already in Android book");
-		}
-		/*
-		if (contact.getId() == 0)
-		{
-			uri = Contacts.People.createPersonInMyContactsGroup(cr, contact
-					.toContentValues());
-		}
-		else
-		{
+			
+			//fetch contact with rawID and adjust its values
+			
+			//first remove stuff that is in addressbook
+			//Cursor personCursor = null, phoneCursor = null, emailCursor = null;
+			Cursor phoneCursor = null, emailCursor = null;
+			//phone
+			{
+				String w = ContactsContract.Data.RAW_CONTACT_ID+"='"+contact.getId()+"' AND " +
+				ContactsContract.Contacts.Data.MIMETYPE + " = '"+ ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE+"'";
+				
+				phoneCursor = cr.query(uri, null, w, null, null);
+				
+				if (phoneCursor == null) throw new SyncException(
+						"EE", "cr.query returned null");
+				
+				if(phoneCursor.getCount() > 0) // otherwise no phone numbers
+				{				
+					if (!phoneCursor.moveToFirst()) return null;
+										
+					do
+					{
+						ops.add(ContentProviderOperation.newDelete(ContactsContract.RawContacts.CONTENT_URI).
+								withSelection(ContactsContract.Data.RAW_CONTACT_ID + "=?", new String[]{String.valueOf(phoneCursor.getInt(0))}).
+								build());
+					 }while (phoneCursor.moveToNext());
+				}
+			}
+			
+			//mail
+			{
+				String w = ContactsContract.Data.RAW_CONTACT_ID+"='"+contact.getId()+"' AND " +
+				ContactsContract.Contacts.Data.MIMETYPE + " = '"+ ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE+"'";
+				
+				emailCursor = cr.query(uri, null, w, null, null);
+				
+				if (emailCursor == null) throw new SyncException(
+						"EE", "cr.query returned null");
+				
+				if(emailCursor.getCount() > 0) // otherwise no email addresses
+				{
+					if (!emailCursor.moveToFirst()) return null;								
+					
+					do
+					{
+						ops.add(ContentProviderOperation.newDelete(ContactsContract.RawContacts.CONTENT_URI).
+								withSelection(ContactsContract.Data.RAW_CONTACT_ID + "=?", new String[]{String.valueOf(emailCursor.getInt(0))}).
+								build());
+					}while (emailCursor.moveToNext());
+				}
+			}
+			
+			
+			for (ContactMethod cm : contact.getContactMethods())
+			{
+				if(cm instanceof EmailContact)
+				{
+					email = cm.getData();
+					
+					ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+			                .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, contact.getId())
+			                .withValue(ContactsContract.Data.MIMETYPE,
+			                        ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE)
+			                .withValue(ContactsContract.CommonDataKinds.Email.DATA, email).
+			                withValue(ContactsContract.CommonDataKinds.Email.TYPE, cm.getType()).build());
+				}
+				
+				if(cm instanceof PhoneContact)
+				{
+					phone = cm.getData();
+					
+					ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+			                .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, contact.getId())
+			                .withValue(ContactsContract.Data.MIMETYPE,
+			                        ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
+			                .withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, phone)
+			                .withValue(ContactsContract.CommonDataKinds.Phone.TYPE, cm.getType())
+			                .build());
+				}
+				
+				Log.i("II", cm.toString() + cm.getClass());
+			}
+			
+			/*
 			uri = ContentUris.withAppendedId(People.CONTENT_URI, contact
 					.getId());
 			cr.update(uri, contact.toContentValues(), null, null);
@@ -391,21 +468,15 @@ public class SyncContactsHandler extends AbstractSyncHandler
 				if (phoneCursor != null) phoneCursor.close();
 				if (emailCursor != null) emailCursor.close();
 			}
+			*/
 
 		}
-		*/
-		/*
-		for (ContactMethod method : contact.getContactMethods())
-		{
-			Uri methodUri = Uri.withAppendedPath(uri, method
-					.getContentDirectory());
-			cr.insert(methodUri, method.toContentValues());
-		}
-		*/
+
 		CacheEntry result = new CacheEntry();
-		result.setLocalId((int) ContentUris.parseId(uri));
+		result.setLocalId((int) ContentUris.parseId(uri)); //TODO check for update
 		result.setLocalHash(contact.getLocalHash());
 		result.setRemoteId(contact.getUid());
+		result.setRemoteHash(contact.getRemoteHash());
 		return result;
 	}
 

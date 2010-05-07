@@ -38,6 +38,7 @@ public abstract class LocalCacheProvider
 	public final static String				COL_REMOTE_IMAP_UID			= "remoteimapuid";
 	public final static String				COL_REMOTE_CHANGEDDATE		= "remotechangeddate";
 	public final static String				COL_REMOTE_SIZE				= "remotesize";
+	public final static String				COL_REMOTE_HASH				= "remotehash";
 
 	public final static int				COL_IDX_LOCAL_ID			= 1;
 	public final static int				COL_IDX_LOCAL_HASH			= 2;
@@ -45,6 +46,7 @@ public abstract class LocalCacheProvider
 	public final static int				COL_IDX_REMOTE_IMAP_UID		= 4;
 	public final static int				COL_IDX_REMOTE_CHANGEDDATE	= 5;
 	public final static int				COL_IDX_REMOTE_SIZE			= 6;
+	public final static int				COL_IDX_REMOTE_HASH			= 7;
 	
 	public static final String[]			DEFAULT_PROJECTION			= new String[] {
 		DatabaseHelper.COL_ID, // 0
@@ -54,6 +56,7 @@ public abstract class LocalCacheProvider
 			COL_REMOTE_IMAP_UID, // 4
 			COL_REMOTE_CHANGEDDATE, // 5
 			COL_REMOTE_SIZE, // 6
+			COL_REMOTE_HASH, // 7
 																};
 
 	public static class CalendarCacheProvider extends LocalCacheProvider

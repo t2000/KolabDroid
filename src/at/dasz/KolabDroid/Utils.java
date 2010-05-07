@@ -23,6 +23,7 @@ package at.dasz.KolabDroid;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
@@ -298,5 +299,28 @@ public final class Utils
 		Date dt = m.getSentDate();
 		if(dt == null) dt = m.getReceivedDate();
 		return dt;
+	}
+	
+	public final static byte[] sha1Hash(String text)
+	{
+		MessageDigest hash = null;
+		
+		try
+		{
+			hash = MessageDigest.getInstance("SHA1");
+			
+			byte[] input = text.getBytes();
+			
+			byte[] hashValue = hash.digest(input);
+			
+			//Log.i("II","out digest: " + hashValue);
+			return hashValue;
+		}
+		catch (Exception ex)
+		{
+			Log.e("EE", "Exception in sha1hash: " + ex.toString());
+		}
+		
+		return null;		
 	}
 }

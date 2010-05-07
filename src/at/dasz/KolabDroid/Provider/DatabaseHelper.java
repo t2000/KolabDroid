@@ -35,7 +35,7 @@ import at.dasz.KolabDroid.Utils;
 public class DatabaseHelper extends SQLiteOpenHelper
 {
 	private final static String		DATABASE_NAME				= "KolabDroid.db";
-	private final static int		DATABASE_VERSION			= 6;
+	private final static int		DATABASE_VERSION			= 7;
 	
 	public final static String		COL_ID						= "_id";
 	public final static int			COL_IDX_ID					= 0;
@@ -98,7 +98,10 @@ public class DatabaseHelper extends SQLiteOpenHelper
 			if(oldVersion == 6)
 			{
 				// Add alter statements for version upgrade 6 to 7
-				// ...
+				
+				dropDb(db);
+				createDb(db);
+				
 				// Next version, continue upgrade
 				oldVersion = 7;
 			}
@@ -118,7 +121,8 @@ public class DatabaseHelper extends SQLiteOpenHelper
 				LocalCacheProvider.COL_REMOTE_ID + " TEXT UNIQUE",
 				LocalCacheProvider.COL_REMOTE_IMAP_UID + " TEXT",
 				LocalCacheProvider.COL_REMOTE_CHANGEDDATE + " INTEGER",
-				LocalCacheProvider.COL_REMOTE_SIZE + " INTEGER" });
+				LocalCacheProvider.COL_REMOTE_SIZE + " INTEGER",
+				LocalCacheProvider.COL_REMOTE_HASH + " BLOB"});
 
 		db.execSQL("CREATE TABLE " + LocalCacheProvider.CONTACT_TABLE_NAME + " (" + columns
 				+ ");");
