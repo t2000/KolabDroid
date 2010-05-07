@@ -215,11 +215,17 @@ public class CacheEntry
 				String docText = Utils.getXml(doc.getDocumentElement());			
 				byte[] remoteHash = Utils.sha1Hash(docText);
 				if(Arrays.equals(remoteHash, entry.getRemoteHash()))
+				{
 					remoteHashIsSame = true;
+				}
+				else
+				{
+					remoteHashIsSame = false;
+				}
 			}
 			catch (Exception ex)
 			{
-				ex.printStackTrace();
+				Log.e("EE", ex.toString());
 			}						
 		}
 		
