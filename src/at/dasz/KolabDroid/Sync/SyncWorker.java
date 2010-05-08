@@ -221,9 +221,9 @@ public class SyncWorker extends BaseWorker
 
 					if (sync.getCacheEntry() == null)
 					{
-						Log.i("sync", "6. found no local entry => save");
-						status.incrementLocalNew();
+						Log.i("sync", "6. found no local entry => save");						
 						handler.createLocalItemFromServer(sync);
+						status.incrementLocalNew();
 						if (sync.getCacheEntry() == null)
 						{
 							Log
@@ -252,10 +252,10 @@ public class SyncWorker extends BaseWorker
 								{
 									Log
 											.i("sync",
-													"local changes found: updating ServerItem from Local");
-									status.incrementRemoteChanged();
+													"local changes found: updating ServerItem from Local");									
 									handler.updateServerItemFromLocal(session,
 											sourceFolder, sync);
+									status.incrementRemoteChanged();
 								}
 							}
 							else
@@ -283,9 +283,9 @@ public class SyncWorker extends BaseWorker
 							{
 								Log.i("sync", "7.b no local changes found:"
 										+ " updating local item from server");
-							}
-							status.incrementLocalChanged();
+							}							
 							handler.updateLocalItemFromServer(sync);
+							status.incrementLocalChanged();
 						}
 					}
 				}
@@ -340,9 +340,10 @@ public class SyncWorker extends BaseWorker
 					if (sync.getCacheEntry() != null)
 					{
 						Log.i("sync",
-								"9.b found in local cache: deleting locally");
-						status.incrementLocalDeleted();
+								"9.b found in local cache: deleting locally");						
 						handler.deleteLocalItem(sync);
+						status.incrementLocalDeleted();
+						processedEntries.add(localId);
 					}
 					else
 					{
