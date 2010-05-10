@@ -80,7 +80,12 @@ public class PhoneContact extends ContactMethod
 		default:
 			break;
 		}
-		Utils.setXmlElementValue(xml, phone, "number", getData());
+		
+		//strip "-" out of phone numbers
+		String tmp = getData();
+		String stripped = tmp.replaceAll("-", "");
+		
+		Utils.setXmlElementValue(xml, phone, "number", stripped);
 	}
 	
 	@Override
