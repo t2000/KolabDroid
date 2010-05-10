@@ -370,7 +370,7 @@ public class SyncContactsHandler extends AbstractSyncHandler
 					do
 					{
 						ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI).
-								withSelection(ContactsContract.Data.RAW_CONTACT_ID + "=?", new String[]{String.valueOf(emailCursor.getInt(idCol))}).
+								withSelection(ContactsContract.Data._ID + "=?", new String[]{String.valueOf(emailCursor.getInt(idCol))}).
 								build());						
 					}while (emailCursor.moveToNext());
 				}
