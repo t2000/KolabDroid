@@ -39,6 +39,7 @@ public class SettingsView extends Activity {
 	private EditText txtPassword;
 	private EditText txtFolderContact;
 	private EditText txtFolderCalendar;
+	private CheckBox cbCreateRemoteHash;
 	
 	private Settings pref;
 	private boolean isInitializing = true;
@@ -55,6 +56,7 @@ public class SettingsView extends Activity {
         txtPassword = (EditText)findViewById(R.id.editpassword);
         txtFolderContact = (EditText)findViewById(R.id.editfoldercontact);
         txtFolderCalendar = (EditText)findViewById(R.id.editfoldercalendar);
+        cbCreateRemoteHash = (CheckBox)findViewById(R.id.createRemoteHash);
         
         pref = new Settings(this);
         
@@ -79,6 +81,7 @@ public class SettingsView extends Activity {
 		txtPassword.setText(pref.getPassword());
 		txtFolderContact.setText(pref.getContactsFolder());
 		txtFolderCalendar.setText(pref.getCalendarFolder());
+		cbCreateRemoteHash.setChecked(pref.getCreateRemoteHash());
 
 		isInitializing = false;
 	}
@@ -93,6 +96,7 @@ public class SettingsView extends Activity {
 		pref.setPassword(txtPassword.getText().toString());
 		pref.setContactsFolder(txtFolderContact.getText().toString());
 		pref.setCalendarFolder(txtFolderCalendar.getText().toString());
+		pref.setCreateRemoteHash(cbCreateRemoteHash.isChecked());
 		pref.save();
 
 		super.onPause();

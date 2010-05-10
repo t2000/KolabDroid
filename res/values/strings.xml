@@ -37,4 +37,5 @@
 <string name="stopsync">Stop sync</string>
 <string name="clearlog">Clear log</string>
 <string name="syncaborted">Sync aborted</string>
+<string name="createRemoteHash">Create Remote Hash (opt.)</string>
 </resources>

@@ -163,13 +163,14 @@ public class CacheEntry
 
 	/**
 	 * Checks whether the specified CacheEntry and the Message are in sync.
+	 * Creates a HashValue for the Remote Message, needs to retrieve it first
 	 * 
 	 * @param entry
 	 * @param message
 	 * @return
 	 * @throws MessagingException
 	 */
-	public static boolean isSame(CacheEntry entry, Message message)
+	public static boolean isSameRemoteHash(CacheEntry entry, Message message)
 			throws MessagingException
 	{
 		Date dt = null;
@@ -233,6 +234,50 @@ public class CacheEntry
 				&& entry.getRemoteChangedDate().equals(dt)
 				&& entry.getRemoteId().equals(message.getSubject())
 				&& remoteHashIsSame;
+
+		if (!result)
+		{
+			if (entry == null) Log.d("syncisSame", "entry == null");
+			if (message == null) Log.d("syncisSame", "message == null");
+			if (entry != null && message != null)
+			{
+				if (!entry.getRemoteChangedDate().equals(dt))
+				{
+					Log.d("syncisSame", "getRemoteChangedDate="
+							+ entry.getRemoteChangedDate() + ", getReceived/SentDate="
+							+ dt);
+				}
+				if (!entry.getRemoteId().equals(message.getSubject()))
+				{
+					Log.d("syncisSame", "getRemoteId=" + entry.getRemoteId()
+							+ ", getSubject=" + message.getSubject());
+				}
+			}
+		}
+
+		return result;
+	}
+	
+	/**
+	 * Checks whether the specified CacheEntry and the Message are in sync.
+	 * 
+	 * @param entry
+	 * @param message
+	 * @return
+	 * @throws MessagingException
+	 */
+	public static boolean isSame(CacheEntry entry, Message message)
+			throws MessagingException
+	{
+		Date dt = null;
+		if(message != null) 
+		{
+			dt = Utils.getMailDate(message);
+		}
+				
+		boolean result = entry != null && message != null
+				&& entry.getRemoteChangedDate().equals(dt)
+				&& entry.getRemoteId().equals(message.getSubject());
 
 		if (!result)
 		{

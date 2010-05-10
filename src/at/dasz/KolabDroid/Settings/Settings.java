@@ -103,4 +103,12 @@ public class Settings {
 	public void setCalendarFolder(String value) {
 		edit.putString("FOLDER_CALENDAR", value);
 	}
+	
+	public boolean getCreateRemoteHash() {
+		return pref.getBoolean("CREATE_REMOTE_HASH", false);
+	}
+
+	public void setCreateRemoteHash(boolean value) {
+		edit.putBoolean("CREATE_REMOTE_HASH", value);
+	}
 }

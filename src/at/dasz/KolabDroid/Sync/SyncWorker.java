@@ -235,11 +235,20 @@ public class SyncWorker extends BaseWorker
 					}
 					else
 					{
-						Log.d("sync",
-								"7. compare data to figure out what happened");
-						if (CacheEntry.isSame(sync.getCacheEntry(), sync
-								.getMessage())
-								&& !DBG_REMOTE_CHANGED)
+						Log.d("sync", "7. compare data to figure out what happened");
+						
+						boolean cacheIsSame = false;						
+						if(settings.getCreateRemoteHash())
+						{
+							cacheIsSame = CacheEntry.isSameRemoteHash(sync.getCacheEntry(), sync.getMessage());
+						}
+						else
+						{
+							cacheIsSame = CacheEntry.isSame(sync.getCacheEntry(), sync.getMessage());
+						}
+						
+						//if (CacheEntry.isSame(sync.getCacheEntry(), sync.getMessage()) && !DBG_REMOTE_CHANGED)
+						if(cacheIsSame && !DBG_REMOTE_CHANGED)
 						{
 							Log.d("sync", "7.a/d cur=localdb");
 							if (handler.hasLocalItem(sync))
