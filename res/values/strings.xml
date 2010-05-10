@@ -19,7 +19,7 @@
 	<string name="connect_server">Connecting to IMAP server ...</string>
 	<string name="fetching_messages">Fetching IMAP headers ...</string>
 	<string name="processing_message_format">Processing message %1$d of %2$d.</string>
-	<string name="processing_item_format">Processing local item %1$d of ?.</string>
+	<string name="processing_item_format">Processing local item %1$d of %2$d.</string>
 	<string name="sync_error_format">Error while synchronizing: %1$s</string>
 	<string name="foldercontact">Contacts folder</string>
 	<string name="foldercalendar">Calendar folder</string>

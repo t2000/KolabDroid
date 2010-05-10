@@ -335,7 +335,7 @@ public class SyncWorker extends BaseWorker
 					Log.d("sync", "9. processing #" + localId);
 
 					StatusHandler.writeStatus(String.format(processItemFormat,
-							currentLocalItemNo++));
+							currentLocalItemNo++, c.getCount()));
 
 					if (processedEntries.contains(localId))
 					{
@@ -352,6 +352,7 @@ public class SyncWorker extends BaseWorker
 								"9.b found in local cache: deleting locally");						
 						handler.deleteLocalItem(sync);
 						status.incrementLocalDeleted();
+						status.incrementItems();
 						processedEntries.add(localId);
 					}
 					else
@@ -362,6 +363,7 @@ public class SyncWorker extends BaseWorker
 						handler.createServerItemFromLocal(session,
 								sourceFolder, sync, localId);
 						status.incrementRemoteNew();
+						status.incrementItems();
 						processedEntries.add(localId);
 					}
 				}
