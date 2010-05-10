@@ -239,16 +239,15 @@ public class SyncContactsHandler extends AbstractSyncHandler
 	{		
 		ArrayList<ContentProviderOperation> ops = new ArrayList<ContentProviderOperation>();
     	
-		ops.add(ContentProviderOperation.newDelete(ContactsContract.RawContacts.CONTENT_URI).
-    	withSelection(ContactsContract.RawContacts._ID + "=?", new String[]{String.valueOf(localId)}).
-    	build());
-		
-		//remove all phone numbers and email addresses as well
+		//remove all phone numbers and email addresses
 		ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI).
 				withSelection(ContactsContract.Data.RAW_CONTACT_ID + "=?", new String[]{String.valueOf(localId)}).
 				build());
 		
-		//TODO: delete entry in "contact" table?
+		//remove raw_contact (will also delete entry in contact table
+		ops.add(ContentProviderOperation.newDelete(ContactsContract.RawContacts.CONTENT_URI).
+    	withSelection(ContactsContract.RawContacts._ID + "=?", new String[]{String.valueOf(localId)}).
+    	build());
 		
 		try {
             cr.applyBatch(ContactsContract.AUTHORITY, ops);
