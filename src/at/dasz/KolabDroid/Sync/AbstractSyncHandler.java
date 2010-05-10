@@ -24,6 +24,7 @@ package at.dasz.KolabDroid.Sync;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 import java.util.Date;
 
 import javax.activation.DataHandler;
@@ -184,6 +185,55 @@ public abstract class AbstractSyncHandler implements SyncHandler
 		c.setRemoteChangedDate(dt);
 		c.setRemoteId(m.getSubject());
 		c.setRemoteSize(m.getSize());
+		
+		//set correct remote hash
+		InputStream is = null;
+		try
+		{
+			DataSource mainDataSource = m.getDataHandler()
+					.getDataSource();
+			if ((mainDataSource instanceof MultipartDataSource))
+			{
+
+				MultipartDataSource multipart = (MultipartDataSource) mainDataSource;
+				for (int idx = 0; idx < multipart.getCount(); idx++)
+				{
+					BodyPart p = multipart.getBodyPart(idx);
+	
+					if (!p.isMimeType("text/plain"))
+					{
+						is = p.getInputStream();
+						break;
+					}
+				}
+			}
+			else
+			{
+				is = mainDataSource.getInputStream();
+			}
+		}
+		catch (Exception ex)
+		{
+			ex.printStackTrace();
+		}
+		
+		if(is != null)
+		{
+			Document doc = null;
+			try
+			{
+				doc = Utils.getDocument(is);
+				String docText = Utils.getXml(doc.getDocumentElement());			
+				byte[] remoteHash = Utils.sha1Hash(docText);
+				c.setRemoteHash(remoteHash);
+			}
+			catch (Exception ex)
+			{
+				Log.e("EE", ex.toString());
+			}						
+		}
+		
+		
 		getLocalCacheProvider().saveEntry(c);
 	}
 
@@ -200,6 +250,13 @@ public abstract class AbstractSyncHandler implements SyncHandler
 		sync.setCacheEntry(entry);
 
 		String xml = writeXml(sync);
+
+/*
+ * TODO: now done in updateCacheEntry
+		//create hash of mail-content and attach to cache entry		
+		byte[] remoteHash = Utils.sha1Hash(xml);
+		entry.setRemoteHash(remoteHash);
+*/		
 		Message m = wrapXmlInMessage(session, sync, xml);
 		targetFolder.appendMessages(new Message[] { m });
 		m.saveChanges();
