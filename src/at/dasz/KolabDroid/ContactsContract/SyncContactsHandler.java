@@ -95,21 +95,13 @@ public class SyncContactsHandler extends AbstractSyncHandler
 
 	public Cursor getAllLocalItemsCursor()
 	{
-		//return cr.query(People.CONTENT_URI, PEOPLE_ID_PROJECTION, null, null,
-//				null);
-		//TODO: use raw table, but skip deleted entries...
-		return cr.query(ContactsContract.Data.CONTENT_URI,
-				new String[]{ContactsContract.Data.RAW_CONTACT_ID}, null, null, null);
-		//return cr.query(ContactsContract.RawContacts.CONTENT_URI,
-		//		new String[]{ContactsContract.RawContacts._ID}, null, null, null);
+		return cr.query(ContactsContract.RawContacts.CONTENT_URI,
+				new String[]{ContactsContract.RawContacts._ID}, null, null, null);
 	}
 
 	public int getIdColumnIndex(Cursor c)
 	{
-		//return c.getColumnIndex(People._ID);
-		//TODO: use raw table, but skip deleted entries...
-		return c.getColumnIndex(ContactsContract.Data.RAW_CONTACT_ID);
-		//return c.getColumnIndex(ContactsContract.RawContacts._ID);
+		return c.getColumnIndex(ContactsContract.RawContacts._ID);
 	}
 
 	@Override
@@ -154,14 +146,6 @@ public class SyncContactsHandler extends AbstractSyncHandler
 			cm.fromXml((Element) nl.item(i));
 			contact.getContactMethods().add(cm);
 		}
-
-		//TODO: moved to updateCacheEntryFromMessage
-		//create hash of mail and attach to contact
-		/*
-		String docText = Utils.getXml(root);
-		byte[] remoteHash = Utils.sha1Hash(docText);		
-		contact.setRemoteHash(remoteHash);
-		*/
 		sync.setCacheEntry(saveContact(contact));
 	}
 
@@ -183,10 +167,12 @@ public class SyncContactsHandler extends AbstractSyncHandler
 		Element root = xml.getDocumentElement();
 		
 		//TODO: needs to be above contact information (Kmail bug?)
+		//Kmail seems to be picky about <phone> and <email> elements they should be right after each other
+		
 		//remove it for now
 		Utils.deleteXmlElements(root, "last-modification-date");
 		//we do not need this one for now
-		//if we need it, put below contact methods...
+		//if we need it, put below contact methods (otherwise kmail complains)...
 		//TODO: what shall we do with this entry? :)
 		Utils.deleteXmlElements(root, "preferred-address");
 
@@ -253,32 +239,29 @@ public class SyncContactsHandler extends AbstractSyncHandler
 	@Override
 	public void deleteLocalItem(int localId)
 	{
-		//TODO: Set
-		/*
-		 *  Uri uri = ContentUris.withAppendedId(RawContacts.CONTENT_URI, rawContactId).buildUpon().appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true").build();
-ContentProviderClient client = context.getContentResolver().acquireContentProviderClient(ContactsContract.AUTHORITY_URI);
-client.delete(uri, null, null);
-client.release();
-		 * 
-		 */
+		//TODO: Check. According to http://developer.android.com/reference/android/provider/ContactsContract.RawContacts.html
+		//its enought to just delete the raw contact, but in my case the stuff in the data table stays :(
 		ArrayList<ContentProviderOperation> ops = new ArrayList<ContentProviderOperation>();
-    	
-		//remove contact from raw_contact table
-		ops.add(ContentProviderOperation.newDelete(ContactsContract.RawContacts.CONTENT_URI).
-    	withSelection(ContactsContract.RawContacts._ID + "=?", new String[]{String.valueOf(localId)}).
-    	build());
 		
 		//remove all phone numbers and email addresses from data table
-		ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI).
-				withSelection(ContactsContract.Data.RAW_CONTACT_ID + "=?", new String[]{String.valueOf(localId)}).
-				build());
-		
-		//remove contact from contact table
 		/*
-		ops.add(ContentProviderOperation.newDelete(ContactsContract.Contacts.CONTENT_URI).
+		Uri rawDataUri = ContactsContract.Data.CONTENT_URI;
+		ops.add(ContentProviderOperation.newDelete(rawDataUri).
 				withSelection(ContactsContract.Data.RAW_CONTACT_ID + "=?", new String[]{String.valueOf(localId)}).
 				build());
 		*/
+		
+		//normal delete first, then with syncadapter flag
+		Uri rawUri = ContactsContract.RawContacts.CONTENT_URI;
+		ops.add(ContentProviderOperation.newDelete(rawUri).
+    	withSelection(ContactsContract.RawContacts._ID + "=?", new String[]{String.valueOf(localId)}).
+    	build());
+		
+		//remove contact from raw_contact table
+		rawUri = ContactsContract.RawContacts.CONTENT_URI.buildUpon().appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true").build();
+		ops.add(ContentProviderOperation.newDelete(rawUri).
+    	withSelection(ContactsContract.RawContacts._ID + "=?", new String[]{String.valueOf(localId)}).
+    	build());
 		
 		try {
             cr.applyBatch(ContactsContract.AUTHORITY, ops);
@@ -354,8 +337,6 @@ client.release();
 			Uri updateUri = ContactsContract.Data.CONTENT_URI;
 			
 			//fetch contact with rawID and adjust its values
-			
-			//TODO: set CALLER_IS_SYNCADAPTER
 			
 			//first remove stuff that is in addressbook
 			//Cursor personCursor = null, phoneCursor = null, emailCursor = null;
