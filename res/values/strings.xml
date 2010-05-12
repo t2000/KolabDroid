@@ -38,4 +38,8 @@
 <string name="clearlog">Clear log</string>
 <string name="syncaborted">Sync aborted</string>
 <string name="createRemoteHash">Create Remote Hash (opt.)</string>
+<string name="resetSoft">Reset Soft</string>
+<string name="really_reset_soft">Do you really want to delete all KOLABdroid data?</string>
+<string name="resetting_soft_start">Resetting KolabDroid DB</string>
+<string name="resetting_soft_finished">KolabDroid DB resetted.</string>
 </resources>

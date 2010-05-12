@@ -38,6 +38,7 @@ import at.dasz.KolabDroid.Imap.DchFactory;
 import at.dasz.KolabDroid.Provider.StatusProvider;
 import at.dasz.KolabDroid.Sync.BaseWorker;
 import at.dasz.KolabDroid.Sync.ResetService;
+import at.dasz.KolabDroid.Sync.ResetSoftService;
 import at.dasz.KolabDroid.Sync.SyncService;
 import at.dasz.KolabDroid.Sync.SyncServiceManager;
 
@@ -97,6 +98,7 @@ public class Main extends Activity implements MainActivity {
     private final static int MENU_REFRESH = 3;
     private final static int MENU_STOP_SYNC = 5;
     private final static int MENU_CLEAR_LOG = 6;
+    private final static int MENU_RESET_SOFT = 7;
     
     /* Creates the menu items */
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -105,6 +107,7 @@ public class Main extends Activity implements MainActivity {
         menu.add(0, MENU_STOP_SYNC, 0, R.string.stopsync);
         menu.add(0, MENU_CLEAR_LOG, 0, R.string.clearlog);
         menu.add(0, MENU_RESET, 0, R.string.reset);
+        menu.add(0, MENU_RESET_SOFT, 0, R.string.resetSoft);
         return true;
     }
 
@@ -117,6 +120,10 @@ public class Main extends Activity implements MainActivity {
             return true;
         case MENU_RESET:
     		resetData();
+    		bindStatus();
+            return true;
+        case MENU_RESET_SOFT:
+    		resetDataSoft();
     		bindStatus();
             return true;
         case MENU_REFRESH:
@@ -145,6 +152,16 @@ public class Main extends Activity implements MainActivity {
 					dlgResetListener, NotificationDialog.closeDlg);
 		}
 	}
+	
+	private void resetDataSoft()
+	{
+		if(BaseWorker.isRunning()) {
+			NotificationDialog.show(this, BaseWorker.getRunningMessageResID());
+		} else {
+			NotificationDialog.showYesNo(this, R.string.really_reset_soft, 
+					dlgResetSoftListener, NotificationDialog.closeDlg);
+		}
+	}
 
 	private void showSettings()
 	{
@@ -164,6 +181,13 @@ public class Main extends Activity implements MainActivity {
     private final DialogInterface.OnClickListener dlgResetListener = new DialogInterface.OnClickListener() {
 		public void onClick(DialogInterface dialog, int which) {
 			ResetService.startReset(Main.this);
+			dialog.cancel();
+		}
+    };
+    
+    private final DialogInterface.OnClickListener dlgResetSoftListener = new DialogInterface.OnClickListener() {
+		public void onClick(DialogInterface dialog, int which) {
+			ResetSoftService.startReset(Main.this);
 			dialog.cancel();
 		}
     };
