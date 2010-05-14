@@ -281,9 +281,19 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 		Utils.setXmlElementValue(xml, root, "summary", source.getTitle());
 		Utils.setXmlElementValue(xml, root, "location", source
 				.getEventLocation());
-		Utils.setXmlElementValue(xml, root, "start-date", source.getDtstart()
+		
+		//times have to be in UTC, according to
+		//http://www.kolab.org/doc/kolabformat-2.0rc7-html/x123.html
+		Time startTime = source.getDtstart();
+		startTime.switchTimezone("UTC");
+		
+		Utils.setXmlElementValue(xml, root, "start-date", startTime
 				.format3339(source.getAllDay()));
-		Utils.setXmlElementValue(xml, root, "end-date", source.getDtend()
+		
+		Time endTime = source.getDtend();
+		endTime.switchTimezone("UTC");
+		
+		Utils.setXmlElementValue(xml, root, "end-date", endTime
 				.format3339(source.getAllDay()));
 
 		String rrule = source.getrRule();
