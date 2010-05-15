@@ -126,6 +126,13 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 		cal.setDescription(Utils.getXmlElementString(root, "body"));
 		cal.setTitle(Utils.getXmlElementString(root, "summary"));
 		cal.setEventLocation(Utils.getXmlElementString(root, "location"));
+		
+		int reminderTime = Utils.getXmlElementInt(root, "alarm", -1);
+		if(reminderTime > -1)
+		{
+			cal.setHasAlarm(1);
+			cal.setReminderTime(reminderTime);
+		}
 
 		Time start = Utils.getXmlElementTime(root, "start-date");
 		Time end = Utils.getXmlElementTime(root, "end-date");
@@ -289,6 +296,11 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 		
 		Utils.setXmlElementValue(xml, root, "start-date", startTime
 				.format3339(source.getAllDay()));
+		
+		if(source.getHasAlarm() != 0)
+		{
+			Utils.setXmlElementValue(xml, root, "alarm", Integer.toString(source.getReminderTime()));
+		}
 		
 		Time endTime = source.getDtend();
 		endTime.switchTimezone("UTC");

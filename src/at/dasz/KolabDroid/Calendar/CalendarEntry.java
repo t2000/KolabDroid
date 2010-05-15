@@ -46,6 +46,7 @@ public class CalendarEntry
 	private int					hasAlarm;
 	private String				rRule;
 	private String				uid;
+	private int					reminderTime = -1;
 
 	public int getId()
 	{
@@ -181,6 +182,16 @@ public class CalendarEntry
 		this.rRule = rRule;
 	}
 
+	public int getReminderTime()
+	{
+		return reminderTime;
+	}
+
+	public void setReminderTime(int reminderTime)
+	{
+		this.reminderTime = reminderTime;
+	}
+
 	@Override
 	public String toString()
 	{
@@ -201,6 +212,7 @@ public class CalendarEntry
 		contents.add(getEventLocation() == null ? "no EventLocation"
 				: getEventLocation());
 		contents.add(getrRule() == null ? "no rRule" : getrRule());
+		contents.add(getReminderTime() == -1 ? "no Reminder" : Integer.toString(getReminderTime()));
 		return Utils.join("|", contents.toArray());
 	}
 
