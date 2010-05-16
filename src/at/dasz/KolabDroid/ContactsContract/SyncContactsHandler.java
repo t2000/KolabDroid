@@ -239,29 +239,19 @@ public class SyncContactsHandler extends AbstractSyncHandler
 	@Override
 	public void deleteLocalItem(int localId)
 	{
-		//TODO: Check. According to http://developer.android.com/reference/android/provider/ContactsContract.RawContacts.html
-		//its enought to just delete the raw contact, but in my case the stuff in the data table stays :(
 		ArrayList<ContentProviderOperation> ops = new ArrayList<ContentProviderOperation>();
 		
-		//remove all phone numbers and email addresses from data table
-		/*
-		Uri rawDataUri = ContactsContract.Data.CONTENT_URI;
-		ops.add(ContentProviderOperation.newDelete(rawDataUri).
-				withSelection(ContactsContract.Data.RAW_CONTACT_ID + "=?", new String[]{String.valueOf(localId)}).
-				build());
-		*/
-		
-		//normal delete first, then with syncadapter flag
+		//normal delete first, then with syncadapter flag		
 		Uri rawUri = ContactsContract.RawContacts.CONTENT_URI;
 		ops.add(ContentProviderOperation.newDelete(rawUri).
     	withSelection(ContactsContract.RawContacts._ID + "=?", new String[]{String.valueOf(localId)}).
     	build());
 		
-		//remove contact from raw_contact table
+		//remove contact from raw_contact table (this time with syncadapter flag set)		
 		rawUri = ContactsContract.RawContacts.CONTENT_URI.buildUpon().appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true").build();
 		ops.add(ContentProviderOperation.newDelete(rawUri).
     	withSelection(ContactsContract.RawContacts._ID + "=?", new String[]{String.valueOf(localId)}).
-    	build());
+    	build());		
 		
 		try {
             cr.applyBatch(ContactsContract.AUTHORITY, ops);
