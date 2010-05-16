@@ -34,7 +34,7 @@ public class CalendarProvider
 {
 	public static final Uri			CALENDAR_URI	= Uri
 															.parse("content://calendar/events");
-	public static final Uri CALENDAR_ALERT_URI = Uri.parse("content://calendar/calendaralerts");
+	public static final Uri CALENDAR_ALERT_URI = Uri.parse("content://calendar/calendar_alerts");
 	public static final String		_ID				= "_id";
 
 	private static final String[]	projection		= new String[] { "_id",
