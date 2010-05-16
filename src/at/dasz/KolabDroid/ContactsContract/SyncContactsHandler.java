@@ -26,6 +26,7 @@ import java.util.Date;
 import java.util.UUID;
 
 import javax.mail.MessagingException;
+import javax.mail.Flags.Flag;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
@@ -260,6 +261,38 @@ public class SyncContactsHandler extends AbstractSyncHandler
         }
 		
 	}
+	
+	private void deleteLocalItemFinally(int localId)
+	{
+		ArrayList<ContentProviderOperation> ops = new ArrayList<ContentProviderOperation>();
+		
+		//remove contact from raw_contact table (with syncadapter flag set)		
+		Uri rawUri = ContactsContract.RawContacts.CONTENT_URI.buildUpon().appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true").build();
+		ops.add(ContentProviderOperation.newDelete(rawUri).
+    	withSelection(ContactsContract.RawContacts._ID + "=?", new String[]{String.valueOf(localId)}).
+    	build());		
+		
+		try {
+            cr.applyBatch(ContactsContract.AUTHORITY, ops);
+        } catch (Exception e) {
+        	Log.e("EE", e.toString());
+        }
+		
+	}
+	
+	@Override
+	public void deleteServerItem(SyncContext sync) throws MessagingException, SyncException
+	{
+		Log.d("sync", "Deleting from server: " + sync.getMessage().getSubject());
+		sync.getMessage().setFlag(Flag.DELETED, true);
+		// remove contents too, to avoid confusing the butchered JAF
+		// message.setContent("", "text/plain");
+		// message.saveChanges();
+		getLocalCacheProvider().deleteEntry(sync.getCacheEntry());
+		
+		//make sure it gets flushed from the raw_contacts table on the phone as well
+		deleteLocalItemFinally(sync.getCacheEntry().getLocalId());
+	}
 
 	private CacheEntry saveContact(Contact contact) throws SyncException
 	{
@@ -467,7 +500,7 @@ public class SyncContactsHandler extends AbstractSyncHandler
 			String firstName = personCursor.getString(idxFirst);
 			String lastName = personCursor.getString(idxLast);
 			
-			String name = firstName + " " + lastName;
+			//String name = firstName + " " + lastName;
 			
 			//Log.i("II", "Cursor Line" +name);
 						
