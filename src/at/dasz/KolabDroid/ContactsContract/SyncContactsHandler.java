@@ -104,9 +104,11 @@ public class SyncContactsHandler extends AbstractSyncHandler
 	public Cursor getAllLocalItemsCursor()
 	{
 		//return only those which are not deleted by other programs
-		String where = ContactsContract.RawContacts.DELETED+"='0'";
+		//String where = ContactsContract.RawContacts.DELETED+"='0'";
+		
+		//return all again
 		return cr.query(ContactsContract.RawContacts.CONTENT_URI,
-				new String[]{ContactsContract.RawContacts._ID}, where, null, null);
+				new String[]{ContactsContract.RawContacts._ID}, null, null, null);
 	}
 
 	public int getIdColumnIndex(Cursor c)
