@@ -30,6 +30,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import android.database.Cursor;
 import at.dasz.KolabDroid.Provider.LocalCacheProvider;
+import at.dasz.KolabDroid.Settings.Settings;
 
 /**
  * This interface defines the necessary operations to be able to synchronize a 
@@ -100,7 +101,8 @@ public interface SyncHandler
 	 * @throws ParserConfigurationException 
 	 * @throws SyncException 
 	 */
-	public abstract void createLocalItemFromServer(SyncContext sync)
+	//public abstract void createLocalItemFromServer(SyncContext sync)
+	public abstract void createLocalItemFromServer(Session session, Folder folder, SyncContext sync)
 			throws MessagingException, ParserConfigurationException, IOException, SyncException;
 
 	/**
@@ -162,4 +164,18 @@ public interface SyncHandler
 	 */
 	public abstract void deleteServerItem(SyncContext sync)
 			throws MessagingException, SyncException;
+	
+	/**
+	 * Get Main Application Settings, set by the user
+	 * 
+	 * @return Settings
+	 */
+	public abstract Settings getSettings();
+	
+	/**
+	 * Set Main Application Settings, set by the user
+	 * 
+	 * @param settings
+	 */
+	public abstract void setSettings(Settings settings);
 }

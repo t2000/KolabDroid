@@ -33,5 +33,6 @@
 
 
 <CheckBox android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/createRemoteHash" android:text="@string/createRemoteHash"></CheckBox>
+<CheckBox android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/mergeContactsByName" android:id="@+id/mergeContactsByName"></CheckBox>
 </LinearLayout>
 </ScrollView>

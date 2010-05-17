@@ -111,4 +111,12 @@ public class Settings {
 	public void setCreateRemoteHash(boolean value) {
 		edit.putBoolean("CREATE_REMOTE_HASH", value);
 	}
+	
+	public boolean getMergeContactsByName() {
+		return pref.getBoolean("MERGE_CONTACTS_BY_NAME", false);
+	}
+
+	public void setMergeContactsByName(boolean value) {
+		edit.putBoolean("MERGE_CONTACTS_BY_NAME", value);
+	}
 }

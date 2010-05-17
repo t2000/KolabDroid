@@ -161,6 +161,8 @@ public class SyncWorker extends BaseWorker
 			throws MessagingException, IOException,
 			ParserConfigurationException, SyncException
 	{
+		handler.setSettings(settings); //handler should be able to react on settings
+		
 		StatusHandler.writeStatus(R.string.connect_server);
 		Store server = null;
 		Folder sourceFolder = null;
@@ -222,7 +224,7 @@ public class SyncWorker extends BaseWorker
 					if (sync.getCacheEntry() == null)
 					{
 						Log.i("sync", "6. found no local entry => save");						
-						handler.createLocalItemFromServer(sync);
+						handler.createLocalItemFromServer(session, sourceFolder, sync);
 						status.incrementLocalNew();
 						if (sync.getCacheEntry() == null)
 						{

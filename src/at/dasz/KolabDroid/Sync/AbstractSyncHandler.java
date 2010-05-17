@@ -24,7 +24,6 @@ package at.dasz.KolabDroid.Sync;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
 import java.util.Date;
 
 import javax.activation.DataHandler;
@@ -52,6 +51,7 @@ import android.content.Context;
 import android.text.format.Time;
 import android.util.Log;
 import at.dasz.KolabDroid.Utils;
+import at.dasz.KolabDroid.Settings.Settings;
 
 /**
  * This class contains common code for all local data stores and defines the 
@@ -70,6 +70,8 @@ public abstract class AbstractSyncHandler implements SyncHandler
 
 	protected StatusEntry	status;
 	protected Context		context;
+	
+	protected Settings settings;
 
 	protected abstract String getMimeType();
 
@@ -134,7 +136,8 @@ public abstract class AbstractSyncHandler implements SyncHandler
 		return status;
 	}
 
-	public void createLocalItemFromServer(SyncContext sync)
+	//public void createLocalItemFromServer(SyncContext sync)
+	public void createLocalItemFromServer(Session session, Folder folder, SyncContext sync)
 			throws MessagingException, ParserConfigurationException,
 			IOException, SyncException
 	{
@@ -176,7 +179,7 @@ public abstract class AbstractSyncHandler implements SyncHandler
 		}
 	}
 
-	private void updateCacheEntryFromMessage(SyncContext sync)
+	protected void updateCacheEntryFromMessage(SyncContext sync)
 			throws MessagingException
 	{
 		CacheEntry c = sync.getCacheEntry();
@@ -326,7 +329,8 @@ public abstract class AbstractSyncHandler implements SyncHandler
 		getLocalCacheProvider().deleteEntry(sync.getCacheEntry());
 	}
 
-	private InputStream extractXml(Message message)
+	//private InputStream extractXml(Message message)
+	protected InputStream extractXml(Message message)
 	{
 		try
 		{
@@ -353,7 +357,7 @@ public abstract class AbstractSyncHandler implements SyncHandler
 		return null;
 	}
 
-	private Message wrapXmlInMessage(Session session, SyncContext sync,
+	protected Message wrapXmlInMessage(Session session, SyncContext sync,
 			String xml) throws MessagingException, SyncException
 	{
 		Message result = new MimeMessage(session);
@@ -390,5 +394,15 @@ public abstract class AbstractSyncHandler implements SyncHandler
 		result.setFlag(Flags.Flag.SEEN, true);
 
 		return result;
+	}
+	
+	public Settings getSettings()
+	{
+		return this.settings;
+	}
+	
+	public void setSettings(Settings settings)
+	{
+		this.settings = settings;
 	}
 }

@@ -40,6 +40,7 @@ public class SettingsView extends Activity {
 	private EditText txtFolderContact;
 	private EditText txtFolderCalendar;
 	private CheckBox cbCreateRemoteHash;
+	private CheckBox cbMergeContactsByName;
 	
 	private Settings pref;
 	private boolean isInitializing = true;
@@ -57,6 +58,7 @@ public class SettingsView extends Activity {
         txtFolderContact = (EditText)findViewById(R.id.editfoldercontact);
         txtFolderCalendar = (EditText)findViewById(R.id.editfoldercalendar);
         cbCreateRemoteHash = (CheckBox)findViewById(R.id.createRemoteHash);
+        cbMergeContactsByName = (CheckBox)findViewById(R.id.mergeContactsByName);
         
         pref = new Settings(this);
         
@@ -82,6 +84,7 @@ public class SettingsView extends Activity {
 		txtFolderContact.setText(pref.getContactsFolder());
 		txtFolderCalendar.setText(pref.getCalendarFolder());
 		cbCreateRemoteHash.setChecked(pref.getCreateRemoteHash());
+		cbMergeContactsByName.setChecked(pref.getMergeContactsByName());
 
 		isInitializing = false;
 	}
@@ -97,6 +100,7 @@ public class SettingsView extends Activity {
 		pref.setContactsFolder(txtFolderContact.getText().toString());
 		pref.setCalendarFolder(txtFolderCalendar.getText().toString());
 		pref.setCreateRemoteHash(cbCreateRemoteHash.isChecked());
+		pref.setMergeContactsByName(cbMergeContactsByName.isChecked());
 		pref.save();
 
 		super.onPause();

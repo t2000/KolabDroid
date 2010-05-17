@@ -21,17 +21,24 @@
 
 package at.dasz.KolabDroid.ContactsContract;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
+import javax.mail.Folder;
+import javax.mail.Message;
 import javax.mail.MessagingException;
+import javax.mail.Session;
 import javax.mail.Flags.Flag;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderResult;
@@ -96,13 +103,58 @@ public class SyncContactsHandler extends AbstractSyncHandler
 
 	public Cursor getAllLocalItemsCursor()
 	{
+		//return only those which are not deleted by other programs
+		String where = ContactsContract.RawContacts.DELETED+"='0'";
 		return cr.query(ContactsContract.RawContacts.CONTENT_URI,
-				new String[]{ContactsContract.RawContacts._ID}, null, null, null);
+				new String[]{ContactsContract.RawContacts._ID}, where, null, null);
 	}
 
 	public int getIdColumnIndex(Cursor c)
 	{
 		return c.getColumnIndex(ContactsContract.RawContacts._ID);
+	}
+	
+	@Override
+	public void createLocalItemFromServer(Session session, Folder targetFolder, SyncContext sync)
+			throws MessagingException, ParserConfigurationException,
+			IOException, SyncException
+	{
+		Log.d("sync", "Downloading item ...");
+		try
+		{
+			InputStream xmlinput = extractXml(sync.getMessage());
+			Document doc = Utils.getDocument(xmlinput);
+			updateLocalItemFromServer(sync, doc);
+			updateCacheEntryFromMessage(sync);
+			
+			if(this.settings.getMergeContactsByName())
+			{		
+				sync.setLocalItem(null);
+				getLocalItem(sync); //fetch updates which were just done
+				
+				updateServerItemFromLocal(sync, doc);
+				
+				// Create & Upload new Message
+				// IMAP needs a new Message uploaded
+				String xml = Utils.getXml(doc);
+				Message newMessage = wrapXmlInMessage(session, sync, xml);
+				targetFolder.appendMessages(new Message[] { newMessage });
+				newMessage.saveChanges();
+
+				// Delete old message
+				sync.getMessage().setFlag(Flag.DELETED, true);
+				// Replace sync context with new message
+				sync.setMessage(newMessage);
+
+				updateCacheEntryFromMessage(sync);				
+			}
+			
+		}
+		catch (SAXException ex)
+		{
+			throw new SyncException(getItemText(sync),
+					"Unable to extract XML Document", ex);
+		}
 	}
 
 	@Override
@@ -307,6 +359,32 @@ public class SyncContactsHandler extends AbstractSyncHandler
 		
 		ArrayList<ContentProviderOperation> ops = new ArrayList<ContentProviderOperation>();
 		
+		boolean doMerge = false;
+		
+		if (contact.getId() == 0 && this.settings.getMergeContactsByName())
+		{
+			//find raw_contact by name
+			String w = ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME +"='"+name+"'";
+			
+			//Cursor c = cr.query(ContactsContract.RawContacts.CONTENT_URI, null, w, null, null);
+			Cursor c = cr.query(ContactsContract.Data.CONTENT_URI, null, w, null, null);
+			
+			if(c.getCount()>0)
+			{
+				c.moveToFirst();
+				//int nameIdx = c.getColumnIndex(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME);
+				//String c.getString(nameIdx);
+				//int rawIdIdx = c.getColumnIndex(ContactsContract.RawContacts._ID);
+				int rawIdIdx = c.getColumnIndex(ContactsContract.Data.RAW_CONTACT_ID);
+				int rawID = c.getInt(rawIdIdx);
+				contact.setId(rawID);
+				doMerge = true;
+			}
+			
+			if(c != null) c.close();
+		}
+		
+		
 		if (contact.getId() == 0)
 		{	
 			ops.add(ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
@@ -355,14 +433,16 @@ public class SyncContactsHandler extends AbstractSyncHandler
 		}
 		else
 		{
-			Log.i("II", "Contact already in Android book");
+			Log.i("II", "Contact already in Android book, MergeFlag: " + doMerge);
 			
 			Uri updateUri = ContactsContract.Data.CONTENT_URI;
+			
+			List<ContactMethod> cms = null;
+			List<ContactMethod> mergedCms = new ArrayList<ContactMethod>();
 			
 			//fetch contact with rawID and adjust its values
 			
 			//first remove stuff that is in addressbook
-			//Cursor personCursor = null, phoneCursor = null, emailCursor = null;
 			Cursor phoneCursor = null, emailCursor = null;
 			//phone
 			{
@@ -380,12 +460,58 @@ public class SyncContactsHandler extends AbstractSyncHandler
 				{				
 					if (!phoneCursor.moveToFirst()) return null;
 					int idCol = phoneCursor.getColumnIndex(ContactsContract.Data._ID);
-					do
-					{						
-						ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI).
+					int numberCol = phoneCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
+					int typeCol = phoneCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.TYPE);					
+					
+					if(!doMerge)
+					{
+						do
+						{
+							ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI).
 								withSelection(ContactsContract.Data._ID + "=?", new String[]{String.valueOf(phoneCursor.getInt(idCol))}).
-								build());						
-					 }while (phoneCursor.moveToNext());
+								build());
+						 }while (phoneCursor.moveToNext());													
+					}
+					else
+					{
+						for(ContactMethod cm : contact.getContactMethods())
+						{							
+							if(! (cm instanceof PhoneContact)) continue;
+							
+							boolean found = false;							
+							String newNumber = cm.getData();
+							int newType = cm.getType();
+							
+							do {
+								String numberIn = phoneCursor.getString(numberCol);
+								int typeIn = phoneCursor.getInt(typeCol);
+								
+								if(typeIn == newType && numberIn.equals(newNumber))
+								{
+									found = true;
+									break;
+								}
+								
+							}while(phoneCursor.moveToNext());
+							
+							if(!found)
+							{
+								mergedCms.add(cm);
+							}
+						}
+					}
+				}
+				else
+				{
+					if(doMerge)
+					{
+						//we can add all new Numbers
+						for(ContactMethod cm : contact.getContactMethods())
+						{							
+							if(! (cm instanceof PhoneContact)) continue;							
+							mergedCms.add(cm);
+						}
+					}
 				}
 			}
 			
@@ -403,18 +529,73 @@ public class SyncContactsHandler extends AbstractSyncHandler
 				{
 					if (!emailCursor.moveToFirst()) return null;								
 					int idCol = emailCursor.getColumnIndex(ContactsContract.Data._ID);
-					do
+					int mailCol = emailCursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA);
+					int typeCol = emailCursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.TYPE);
+					
+					if(!doMerge)
 					{
-						ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI).
-								withSelection(ContactsContract.Data._ID + "=?", new String[]{String.valueOf(emailCursor.getInt(idCol))}).
-								build());						
-					}while (emailCursor.moveToNext());
+						do
+						{
+							ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI).
+									withSelection(ContactsContract.Data._ID + "=?", new String[]{String.valueOf(emailCursor.getInt(idCol))}).
+									build());
+						}while (emailCursor.moveToNext());
+					}
+					else
+					{
+						for(ContactMethod cm : contact.getContactMethods())
+						{							
+							if(! (cm instanceof EmailContact)) continue;
+							
+							boolean found = false;							
+							String newMail = cm.getData();
+							int newType = cm.getType();
+							
+							do {
+								String numberIn = phoneCursor.getString(mailCol);
+								int typeIn = phoneCursor.getInt(typeCol);
+								
+								if(typeIn == newType && numberIn.equals(newMail))
+								{
+									found = true;
+									break;
+								}
+								
+							}while(emailCursor.moveToNext());
+							
+							if(!found)
+							{
+								mergedCms.add(cm);
+							}
+						}
+					}					
+				}
+				else
+				{
+					if(doMerge)
+					{
+						//we can add all new Numbers
+						for(ContactMethod cm : contact.getContactMethods())
+						{							
+							if(! (cm instanceof EmailContact)) continue;							
+							mergedCms.add(cm);
+						}
+					}
 				}
 			}
 			
 			//insert again
+			if(doMerge)
+			{
+				cms = mergedCms;
+			}
+			else
+			{
+				cms = contact.getContactMethods();
+			}
 			
-			for (ContactMethod cm : contact.getContactMethods())
+			//for (ContactMethod cm : contact.getContactMethods())
+			for (ContactMethod cm : cms)
 			{
 				if(cm instanceof EmailContact)
 				{
@@ -468,7 +649,7 @@ public class SyncContactsHandler extends AbstractSyncHandler
 		result.setLocalId((int) ContentUris.parseId(uri));
 		result.setLocalHash(contact.getLocalHash());
 		result.setRemoteId(contact.getUid());
-		result.setRemoteHash(contact.getRemoteHash());
+		result.setRemoteHash(contact.getRemoteHash());		
 		return result;
 	}
 
