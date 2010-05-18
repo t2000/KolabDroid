@@ -21,8 +21,11 @@
 
 package at.dasz.KolabDroid.Sync;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PipedInputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
 
@@ -212,7 +215,18 @@ public abstract class AbstractSyncHandler implements SyncHandler
 			}
 			else
 			{
-				is = mainDataSource.getInputStream();
+				MimeMultipart multipart = (MimeMultipart) m.getContent();
+				
+				for (int idx = 0; idx < multipart.getCount(); idx++)
+				{
+					BodyPart p = multipart.getBodyPart(idx);
+	
+					if (!p.isMimeType("text/plain"))
+					{
+						is = p.getInputStream();
+						break;
+					}
+				}				
 			}
 		}
 		catch (Exception ex)
@@ -252,14 +266,7 @@ public abstract class AbstractSyncHandler implements SyncHandler
 		entry.setLocalId(localId);
 		sync.setCacheEntry(entry);
 
-		String xml = writeXml(sync);
-
-/*
- * TODO: now done in updateCacheEntry
-		//create hash of mail-content and attach to cache entry		
-		byte[] remoteHash = Utils.sha1Hash(xml);
-		entry.setRemoteHash(remoteHash);
-*/		
+		String xml = writeXml(sync);		
 		Message m = wrapXmlInMessage(session, sync, xml);
 		targetFolder.appendMessages(new Message[] { m });
 		m.saveChanges();

@@ -40,6 +40,8 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import com.sun.mail.imap.IMAPMessage;
+
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderResult;
 import android.content.ContentResolver;
@@ -139,7 +141,7 @@ public class SyncContactsHandler extends AbstractSyncHandler
 				// Create & Upload new Message
 				// IMAP needs a new Message uploaded
 				String xml = Utils.getXml(doc);
-				Message newMessage = wrapXmlInMessage(session, sync, xml);
+				Message newMessage = wrapXmlInMessage(session, sync, xml);				
 				targetFolder.appendMessages(new Message[] { newMessage });
 				newMessage.saveChanges();
 
@@ -703,8 +705,7 @@ public class SyncContactsHandler extends AbstractSyncHandler
 		CacheEntry result = new CacheEntry();
 		result.setLocalId((int) ContentUris.parseId(uri));
 		result.setLocalHash(contact.getLocalHash());
-		result.setRemoteId(contact.getUid());
-		result.setRemoteHash(contact.getRemoteHash());		
+		result.setRemoteId(contact.getUid());		
 		return result;
 	}
 
