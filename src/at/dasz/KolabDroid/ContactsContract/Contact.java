@@ -15,6 +15,18 @@ public class Contact
 	//private String				fullName, uid;
 	private String				uid;
 	private String				givenName, familyName;
+	private String				birthday; //string as in android for now
+	
+	public String getBirthday()
+	{
+		return birthday;
+	}
+
+	public void setBirthday(String birthday)
+	{
+		this.birthday = birthday;
+	}
+
 	private byte[]				remoteHash;
 
 	public byte[] getRemoteHash()

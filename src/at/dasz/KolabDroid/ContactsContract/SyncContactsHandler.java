@@ -186,6 +186,9 @@ public class SyncContactsHandler extends AbstractSyncHandler
 				}
 			}
 		}
+		
+		contact.setBirthday(Utils.getXmlElementString(root, "birthday"));
+		
 		contact.getContactMethods().clear();
 		NodeList nl = Utils.getXmlElements(root, "phone");
 		for (int i = 0; i < nl.getLength(); i++)
@@ -241,6 +244,8 @@ public class SyncContactsHandler extends AbstractSyncHandler
 		Utils.setXmlElementValue(xml, name, "full-name", source.getFullName());
 		Utils.setXmlElementValue(xml, name, "given-name", source.getGivenName());
 		Utils.setXmlElementValue(xml, name, "last-name", source.getFamilyName());
+		
+		Utils.setXmlElementValue(xml, root, "birthday", source.getBirthday());
 
 		Utils.deleteXmlElements(root, "phone");
 		Utils.deleteXmlElements(root, "email");
@@ -402,6 +407,14 @@ public class SyncContactsHandler extends AbstractSyncHandler
 	                .withValue(ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME, firstName)
 	                .withValue(ContactsContract.CommonDataKinds.StructuredName.FAMILY_NAME, lastName)
 	                .build());
+			
+			ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+					.withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+	                .withValue(ContactsContract.Data.MIMETYPE,
+	                        ContactsContract.CommonDataKinds.Event.CONTENT_ITEM_TYPE)	                        
+	                .withValue(ContactsContract.CommonDataKinds.Event.START_DATE, contact.getBirthday())
+	                .withValue(ContactsContract.CommonDataKinds.Event.TYPE, ContactsContract.CommonDataKinds.Event.TYPE_BIRTHDAY)
+	                .build());
 
 			for (ContactMethod cm : contact.getContactMethods())
 			{
@@ -442,10 +455,45 @@ public class SyncContactsHandler extends AbstractSyncHandler
 			List<ContactMethod> cms = null;
 			List<ContactMethod> mergedCms = new ArrayList<ContactMethod>();
 			
-			//fetch contact with rawID and adjust its values
-			
 			//first remove stuff that is in addressbook
-			Cursor phoneCursor = null, emailCursor = null;
+			Cursor phoneCursor = null, emailCursor = null, birthdayCursor = null;
+			
+			//birthday
+			{
+				String w = ContactsContract.Data.RAW_CONTACT_ID+"='"+contact.getId()+"' AND " +
+				ContactsContract.Contacts.Data.MIMETYPE + " = '"+ ContactsContract.CommonDataKinds.Event.CONTENT_ITEM_TYPE+"'";
+				
+				//Log.i("II", "w: " + w);
+				
+				birthdayCursor = cr.query(updateUri, null, w, null, null);
+				
+				if (birthdayCursor == null) throw new SyncException(
+						"EE", "cr.query returned null");
+				
+				if(birthdayCursor.getCount() > 0) // otherwise no events
+				{				
+					if (!birthdayCursor.moveToFirst()) return null;
+					int idCol = birthdayCursor.getColumnIndex(ContactsContract.Data._ID);
+					//int dateCol = birthdayCursor.getColumnIndex(ContactsContract.CommonDataKinds.Event.START_DATE);
+					int typeCol = birthdayCursor.getColumnIndex(ContactsContract.CommonDataKinds.Event.TYPE);					
+					
+					if(birthdayCursor.getInt(typeCol) == ContactsContract.CommonDataKinds.Event.TYPE_BIRTHDAY)
+					{
+						ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI).
+							withSelection(ContactsContract.Data._ID + "=?", new String[]{String.valueOf(birthdayCursor.getInt(idCol))}).
+							build());
+					 }
+				}
+				
+				ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+		                .withValue(ContactsContract.Data.RAW_CONTACT_ID, contact.getId())
+		                .withValue(ContactsContract.Data.MIMETYPE,
+		                        ContactsContract.CommonDataKinds.Event.CONTENT_ITEM_TYPE)
+		                .withValue(ContactsContract.CommonDataKinds.Event.START_DATE, contact.getBirthday())
+		                .withValue(ContactsContract.CommonDataKinds.Event.TYPE, ContactsContract.CommonDataKinds.Event.TYPE_BIRTHDAY)
+		                .build());				
+			}
+			
 			//phone
 			{
 				String w = ContactsContract.Data.RAW_CONTACT_ID+"='"+contact.getId()+"' AND " +
@@ -472,7 +520,7 @@ public class SyncContactsHandler extends AbstractSyncHandler
 							ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI).
 								withSelection(ContactsContract.Data._ID + "=?", new String[]{String.valueOf(phoneCursor.getInt(idCol))}).
 								build());
-						 }while (phoneCursor.moveToNext());													
+						 }while (phoneCursor.moveToNext());
 					}
 					else
 					{
@@ -662,7 +710,7 @@ public class SyncContactsHandler extends AbstractSyncHandler
 
 		Uri uri = ContactsContract.Data.CONTENT_URI;
 
-		Cursor personCursor = null, phoneCursor = null, emailCursor = null;
+		Cursor personCursor = null, phoneCursor = null, emailCursor = null, birthdayCursor = null;
 		try
 		{			
 			String where = ContactsContract.Data.RAW_CONTACT_ID+"='"+sync.getCacheEntry().getLocalId()+"' AND " +
@@ -747,6 +795,36 @@ public class SyncContactsHandler extends AbstractSyncHandler
 						//pc.setType(emailCursor.getInt(typeIdx));
 						result.getContactMethods().add(pc);
 					}while (emailCursor.moveToNext());
+				}
+			}
+			
+			//birthday
+			{
+				String w = ContactsContract.Data.RAW_CONTACT_ID+"='"+sync.getCacheEntry().getLocalId()+"' AND " +
+				ContactsContract.Contacts.Data.MIMETYPE + " = '"+ ContactsContract.CommonDataKinds.Event.CONTENT_ITEM_TYPE +"'";
+				
+				birthdayCursor = cr.query(uri, null, w, null, null);
+				
+				if (birthdayCursor == null) throw new SyncException(
+						getItemText(sync), "cr.query returned null");
+				
+				if(birthdayCursor.getCount() > 0) // otherwise no birthday
+				{
+					if (!birthdayCursor.moveToFirst()) return null;
+					
+					int dateIdx = birthdayCursor.getColumnIndex(ContactsContract.CommonDataKinds.Event.START_DATE);
+					int typeIdx = birthdayCursor.getColumnIndex(ContactsContract.CommonDataKinds.Event.TYPE);
+					//int typeIdx = emailCursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.TYPE);			
+					
+					//do
+					//{
+						int typeIn = birthdayCursor.getInt(typeIdx);
+						if(typeIn == ContactsContract.CommonDataKinds.Event.TYPE_BIRTHDAY)
+						{
+							String bday = birthdayCursor.getString(dateIdx);
+							result.setBirthday(bday);
+						}
+					//}while (birthdayCursor.moveToNext());
 				}
 			}
 
