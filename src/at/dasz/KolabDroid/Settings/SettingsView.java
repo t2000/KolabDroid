@@ -21,11 +21,14 @@
 
 package at.dasz.KolabDroid.Settings;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.app.Activity;
 import android.os.Bundle;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import at.dasz.KolabDroid.R;
 
@@ -41,7 +44,8 @@ public class SettingsView extends Activity {
 	private EditText txtFolderCalendar;
 	private CheckBox cbCreateRemoteHash;
 	private CheckBox cbMergeContactsByName;
-	
+	private Spinner spAccount;
+		
 	private Settings pref;
 	private boolean isInitializing = true;
 
@@ -59,6 +63,7 @@ public class SettingsView extends Activity {
         txtFolderCalendar = (EditText)findViewById(R.id.editfoldercalendar);
         cbCreateRemoteHash = (CheckBox)findViewById(R.id.createRemoteHash);
         cbMergeContactsByName = (CheckBox)findViewById(R.id.mergeContactsByName);
+        spAccount = (Spinner)findViewById(R.id.selectAccount);
         
         pref = new Settings(this);
         
@@ -85,7 +90,10 @@ public class SettingsView extends Activity {
 		txtFolderCalendar.setText(pref.getCalendarFolder());
 		cbCreateRemoteHash.setChecked(pref.getCreateRemoteHash());
 		cbMergeContactsByName.setChecked(pref.getMergeContactsByName());
-
+		
+		//TODO: adjust account spinner to show configured account
+		//setFirstAccount();
+		
 		isInitializing = false;
 	}
 
@@ -101,8 +109,31 @@ public class SettingsView extends Activity {
 		pref.setCalendarFolder(txtFolderCalendar.getText().toString());
 		pref.setCreateRemoteHash(cbCreateRemoteHash.isChecked());
 		pref.setMergeContactsByName(cbMergeContactsByName.isChecked());
+		
+		//TODO: adjust account spinner to show configured account
+		setFirstAccount();
+		
 		pref.save();
 
 		super.onPause();
 	}
+	
+	private void setFirstAccount()
+	{
+		 // Get account data from system
+		
+        Account[] accounts = AccountManager.get(this).getAccounts();
+        
+        if(accounts.length >0)
+        {
+        	pref.setAccountName(accounts[0].name);
+        	pref.setAccountType(accounts[0].type);
+        }
+        else
+        {
+        	pref.setAccountName("");
+        	pref.setAccountType("");
+        }
+	}
+	
 }

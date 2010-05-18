@@ -393,10 +393,15 @@ public class SyncContactsHandler extends AbstractSyncHandler
 		
 		
 		if (contact.getId() == 0)
-		{	
+		{
+			String accountName = settings.getAccountName();
+			if("".equals(accountName)) accountName = null;
+			String accountType = settings.getAccountType();
+			if("".equals(accountType)) accountType = null;
+			
 			ops.add(ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
-	                .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, null)
-	                .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, null)
+	                .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, accountType)
+	                .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, accountName)
 	                .build());
 	        
 			ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)

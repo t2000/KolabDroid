@@ -43,4 +43,5 @@
 <string name="resetting_soft_start">Resetting KolabDroid DB</string>
 <string name="resetting_soft_finished">KolabDroid DB resetted.</string>
 <string name="mergeContactsByName">Merge Contacts by Name</string>
+<string name="targetAccount">Target Account</string>
 </resources>

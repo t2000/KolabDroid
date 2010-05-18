@@ -34,5 +34,7 @@
 
 <CheckBox android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/createRemoteHash" android:text="@string/createRemoteHash"></CheckBox>
 <CheckBox android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/mergeContactsByName" android:id="@+id/mergeContactsByName"></CheckBox>
+<TextView android:id="@+id/TextView03" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="10px" android:text="@string/targetAccount"></TextView><Spinner android:layout_height="wrap_content" android:layout_width="fill_parent" android:id="@+id/selectAccount"></Spinner>
+
 </LinearLayout>
 </ScrollView>

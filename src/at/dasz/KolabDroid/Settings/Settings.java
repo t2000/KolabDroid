@@ -119,4 +119,20 @@ public class Settings {
 	public void setMergeContactsByName(boolean value) {
 		edit.putBoolean("MERGE_CONTACTS_BY_NAME", value);
 	}
+	
+	public String getAccountType() {
+		return pref.getString("ACCOUNT_TYPE", "");
+	}
+	
+	public void setAccountType(String type) {
+		edit.putString("ACCOUNT_TYPE", type);
+	}
+	
+	public String getAccountName() {
+		return pref.getString("ACCOUNT_NAME", "");
+	}
+	
+	public void setAccountName(String name) {
+		edit.putString("ACCOUNT_NAME", name);
+	}
 }
