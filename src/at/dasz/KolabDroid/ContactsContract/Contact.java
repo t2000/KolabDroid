@@ -15,7 +15,7 @@ public class Contact
 	//private String				fullName, uid;
 	private String				uid;
 	private String				givenName, familyName;
-	private String				birthday; //string as in android for now
+	private String				birthday = ""; //string as in android for now
 	
 	public String getBirthday()
 	{
@@ -118,7 +118,14 @@ public class Contact
 			contents.add(cm.getData());
 		}
 		
-		contents.add(birthday);
+		if(!"".equals(birthday))
+		{
+			contents.add(birthday);
+		}
+		else
+		{
+			contents.add("noBday");
+		}
 
 		return Utils.join("|", contents.toArray());
 	}
