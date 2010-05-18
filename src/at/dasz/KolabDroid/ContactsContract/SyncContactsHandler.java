@@ -465,6 +465,16 @@ public class SyncContactsHandler extends AbstractSyncHandler
 			//first remove stuff that is in addressbook
 			Cursor phoneCursor = null, emailCursor = null, birthdayCursor = null;
 			
+			//update name
+			ops.add(ContentProviderOperation.newUpdate(ContactsContract.Data.CONTENT_URI)
+	                .withValue(ContactsContract.Data.RAW_CONTACT_ID, contact.getId())
+	                .withValue(ContactsContract.Data.MIMETYPE,
+	                        ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
+	                .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, name)
+	                .withValue(ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME, firstName)
+	                .withValue(ContactsContract.CommonDataKinds.StructuredName.FAMILY_NAME, lastName)
+	                .build());
+			
 			//birthday
 			{
 				String w = ContactsContract.Data.RAW_CONTACT_ID+"='"+contact.getId()+"' AND " +
