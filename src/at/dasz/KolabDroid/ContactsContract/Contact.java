@@ -117,6 +117,8 @@ public class Contact
 		{
 			contents.add(cm.getData());
 		}
+		
+		contents.add(birthday);
 
 		return Utils.join("|", contents.toArray());
 	}
