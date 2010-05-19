@@ -284,7 +284,7 @@ public final class Utils
 			}
 			buffer.append("</");
 			buffer.append(element.getNodeName());
-			buffer.append(">");
+			buffer.append(">\n");
 		}
 		else if (node != null && node.getNodeValue() != null)
 		{
