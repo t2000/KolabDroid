@@ -67,6 +67,7 @@ public class SyncContactsHandler extends AbstractSyncHandler
 	{
 		super(context);
 		Settings s = new Settings(context);
+		settings = s;
 		defaultFolderName = s.getContactsFolder();
 		cacheProvider = new LocalCacheProvider.ContactsCacheProvider(context);
 		cr = context.getContentResolver();
@@ -76,6 +77,12 @@ public class SyncContactsHandler extends AbstractSyncHandler
 	public String getDefaultFolderName()
 	{
 		return defaultFolderName;
+	}
+	
+	public boolean shouldProcess()
+	{
+		boolean hasFolder = (defaultFolderName != null && !"".equals(defaultFolderName));
+		return settings.getSyncContacts() && hasFolder;
 	}
 
 	public LocalCacheProvider getLocalCacheProvider()

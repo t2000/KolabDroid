@@ -36,6 +36,7 @@ import android.widget.ExpandableListView;
 import android.widget.TextView;
 import at.dasz.KolabDroid.Imap.DchFactory;
 import at.dasz.KolabDroid.Provider.StatusProvider;
+import at.dasz.KolabDroid.Settings.Settings;
 import at.dasz.KolabDroid.Sync.BaseWorker;
 import at.dasz.KolabDroid.Sync.ResetService;
 import at.dasz.KolabDroid.Sync.ResetSoftService;
@@ -62,6 +63,9 @@ public class Main extends Activity implements MainActivity {
 
 		Button btnSync = (Button) findViewById(R.id.sync);
 		btnSync.setOnClickListener(btnSyncListener);
+		
+		Button btnSyncCal = (Button) findViewById(R.id.BtnSyncCalendar);
+		btnSyncCal.setOnClickListener(btnSyncCalListener);
 		
 		status = (TextView) findViewById(R.id.status);
 		StatusHandler.load(this);
@@ -173,6 +177,26 @@ public class Main extends Activity implements MainActivity {
     		if(BaseWorker.isRunning()) {
     			NotificationDialog.show(v.getContext(), BaseWorker.getRunningMessageResID());
     		} else {
+    			Settings s = new Settings(v.getContext());
+    			s.edit();
+    			s.setSyncContacts(true);
+    			s.setSyncCalendar(true);
+    			s.save();
+    			SyncService.startSync(Main.this);
+    		}
+    	}
+    };
+    
+    private final OnClickListener btnSyncCalListener = new OnClickListener() {
+    	public void onClick(View v) {
+    		if(BaseWorker.isRunning()) {
+    			NotificationDialog.show(v.getContext(), BaseWorker.getRunningMessageResID());
+    		} else {    			
+    			Settings s = new Settings(v.getContext());
+    			s.edit();
+    			s.setSyncContacts(false);
+    			s.setSyncCalendar(true);
+    			s.save();
     			SyncService.startSync(Main.this);
     		}
     	}

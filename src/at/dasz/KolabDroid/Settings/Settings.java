@@ -112,6 +112,22 @@ public class Settings {
 		edit.putBoolean("CREATE_REMOTE_HASH", value);
 	}
 	
+	public boolean getSyncCalendar() {
+		return pref.getBoolean("SYNC_CALENDAR", true);
+	}
+
+	public void setSyncCalendar(boolean value) {
+		edit.putBoolean("SYNC_CALENDAR", value);
+	}
+	
+	public boolean getSyncContacts() {
+		return pref.getBoolean("SYNC_CONTACTS", true);
+	}
+
+	public void setSyncContacts(boolean value) {
+		edit.putBoolean("SYNC_CONTACTS", value);
+	}
+	
 	public boolean getMergeContactsByName() {
 		return pref.getBoolean("MERGE_CONTACTS_BY_NAME", false);
 	}

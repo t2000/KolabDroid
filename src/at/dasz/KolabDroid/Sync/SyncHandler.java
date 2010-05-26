@@ -66,6 +66,12 @@ public interface SyncHandler
 	public abstract String getDefaultFolderName();
 
 	/**
+	 * Defines if this SyncHandler should be processed 
+	 * @return
+	 */
+	public abstract boolean shouldProcess();
+	
+	/**
 	 * Returns the local cache provider for this data store.
 	 * @return
 	 */

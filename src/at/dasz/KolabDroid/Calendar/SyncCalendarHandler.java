@@ -58,6 +58,7 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 	{
 		super(context);
 		Settings s = new Settings(context);
+		settings = s;
 		defaultFolderName = s.getCalendarFolder();
 		cacheProvider = new LocalCacheProvider.CalendarCacheProvider(context);
 		calendarProvider = new CalendarProvider(context.getContentResolver());
@@ -68,6 +69,12 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 	public String getDefaultFolderName()
 	{
 		return defaultFolderName;
+	}
+	
+	public boolean shouldProcess()
+	{
+		boolean hasFolder = (defaultFolderName != null && !"".equals(defaultFolderName));
+		return settings.getSyncCalendar() && hasFolder;
 	}
 
 	public LocalCacheProvider getLocalCacheProvider()

@@ -9,7 +9,7 @@
 	<string name="reset">Reset</string>
 	<string name="title">Kolab Client for Android</string>
 	<string name="app_name">Kolab Client for Android</string>
-	<string name="sync">Sync</string>
+	<string name="sync">Sync All</string>
 	<string name="invalidNumberFormat">Invalid number format</string>
 	<string name="ok">OK</string>
 	<string name="usessl">Use SSL</string>
@@ -44,4 +44,5 @@
 <string name="resetting_soft_finished">KolabDroid DB resetted.</string>
 <string name="mergeContactsByName">Merge Contacts by Name</string>
 <string name="targetAccount">Target Account</string>
+<string name="syncCalendar">Sync Calendar only</string>
 </resources>

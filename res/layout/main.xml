@@ -10,9 +10,12 @@
 		android:text="@string/sync" android:layout_width="fill_parent"></Button>
 	
 	
-	<TextView android:layout_width="wrap_content"
+	<Button android:layout_height="wrap_content" android:layout_width="fill_parent" android:id="@+id/BtnSyncCalendar" android:text="@string/syncCalendar"></Button><TextView android:layout_width="wrap_content"
 		android:layout_height="wrap_content" android:id="@+id/status"
 		android:text="&lt;status&gt;"></TextView>
 <ExpandableListView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/statusList"></ExpandableListView>
+
+
+
 
 </LinearLayout>

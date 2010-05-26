@@ -153,15 +153,18 @@ public class SyncWorker extends BaseWorker
 
 	private boolean shouldProcess(SyncHandler handler)
 	{
+		return handler.shouldProcess();
+		/*
 		return handler.getDefaultFolderName() != null
 				&& !"".equals(handler.getDefaultFolderName());
+		*/
 	}
 
 	private void sync(Settings settings, SyncHandler handler)
 			throws MessagingException, IOException,
 			ParserConfigurationException, SyncException
 	{
-		handler.setSettings(settings); //handler should be able to react on settings
+		//handler.setSettings(settings); //handler should be able to react on settings
 		
 		StatusHandler.writeStatus(R.string.connect_server);
 		Store server = null;
