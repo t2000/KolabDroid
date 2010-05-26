@@ -21,11 +21,8 @@
 
 package at.dasz.KolabDroid.Sync;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PipedInputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
 

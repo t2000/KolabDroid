@@ -40,8 +40,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import com.sun.mail.imap.IMAPMessage;
-
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderResult;
 import android.content.ContentResolver;
@@ -132,11 +130,16 @@ public class SyncContactsHandler extends AbstractSyncHandler
 			updateCacheEntryFromMessage(sync);
 			
 			if(this.settings.getMergeContactsByName())
-			{		
+			{
+				Log.d("ConH", "Preparing upload of Contact after merge");
 				sync.setLocalItem(null);
 				getLocalItem(sync); //fetch updates which were just done
 				
+				Log.d("ConH", "Fetched data after merge for " + ((Contact)sync.getLocalItem()).getFullName());
+				
 				updateServerItemFromLocal(sync, doc);
+				
+				Log.d("ConH", "Server item updated after merge");
 				
 				// Create & Upload new Message
 				// IMAP needs a new Message uploaded
@@ -149,8 +152,10 @@ public class SyncContactsHandler extends AbstractSyncHandler
 				sync.getMessage().setFlag(Flag.DELETED, true);
 				// Replace sync context with new message
 				sync.setMessage(newMessage);
+				
+				Log.d("ConH", "IMAP Message replaced after merge");
 
-				updateCacheEntryFromMessage(sync);				
+				updateCacheEntryFromMessage(sync);
 			}
 			
 		}
@@ -366,6 +371,8 @@ public class SyncContactsHandler extends AbstractSyncHandler
 		String email = "";
 		String phone = "";
 		
+		Log.d("ConH", "Saving Contact: \"" + name + "\"");
+		
 		ArrayList<ContentProviderOperation> ops = new ArrayList<ContentProviderOperation>();
 		
 		boolean doMerge = false;
@@ -378,6 +385,11 @@ public class SyncContactsHandler extends AbstractSyncHandler
 			//Cursor c = cr.query(ContactsContract.RawContacts.CONTENT_URI, null, w, null, null);
 			Cursor c = cr.query(ContactsContract.Data.CONTENT_URI, null, w, null, null);
 			
+			if(c == null)
+			{
+				Log.d("ConH", "SC: faild to query for merge with contact: " + name);
+			}
+			
 			if(c.getCount()>0)
 			{
 				c.moveToFirst();
@@ -388,6 +400,8 @@ public class SyncContactsHandler extends AbstractSyncHandler
 				int rawID = c.getInt(rawIdIdx);
 				contact.setId(rawID);
 				doMerge = true;
+				
+				Log.d("ConH", "SC: Found Entry ID: " + rawID + " for contact: " + name + " -> will merge now");
 			}
 			
 			if(c != null) c.close();
@@ -396,6 +410,8 @@ public class SyncContactsHandler extends AbstractSyncHandler
 		
 		if (contact.getId() == 0)
 		{
+			Log.d("ConH", "SC: Contact " + name + " is NEW -> insert");
+			
 			String accountName = settings.getAccountName();
 			if("".equals(accountName)) accountName = null;
 			String accountType = settings.getAccountType();
@@ -449,13 +465,11 @@ public class SyncContactsHandler extends AbstractSyncHandler
 			                .withValue(ContactsContract.CommonDataKinds.Phone.TYPE, cm.getType())
 			                .build());
 				}
-				
-				Log.i("II", cm.toString() + cm.getClass());
 			}
 		}
 		else
 		{
-			Log.i("II", "Contact already in Android book, MergeFlag: " + doMerge);
+			Log.d("ConH", "SC. Contact " +name+" already in Android book, MergeFlag: " + doMerge);
 			
 			Uri updateUri = ContactsContract.Data.CONTENT_URI;
 			
@@ -465,7 +479,8 @@ public class SyncContactsHandler extends AbstractSyncHandler
 			//first remove stuff that is in addressbook
 			Cursor phoneCursor = null, emailCursor = null, birthdayCursor = null;
 			
-			//update name
+			//update name (broken at the moment :()
+			/*
 			ops.add(ContentProviderOperation.newUpdate(ContactsContract.Data.CONTENT_URI)
 	                .withValue(ContactsContract.Data.RAW_CONTACT_ID, contact.getId())
 	                .withValue(ContactsContract.Data.MIMETYPE,
@@ -474,6 +489,7 @@ public class SyncContactsHandler extends AbstractSyncHandler
 	                .withValue(ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME, firstName)
 	                .withValue(ContactsContract.CommonDataKinds.StructuredName.FAMILY_NAME, lastName)
 	                .build());
+			*/
 			
 			//birthday
 			{
@@ -502,13 +518,18 @@ public class SyncContactsHandler extends AbstractSyncHandler
 					 }
 				}
 				
-				ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+				if(! "".equals(contact.getBirthday()))
+				{				
+					ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
 		                .withValue(ContactsContract.Data.RAW_CONTACT_ID, contact.getId())
 		                .withValue(ContactsContract.Data.MIMETYPE,
 		                        ContactsContract.CommonDataKinds.Event.CONTENT_ITEM_TYPE)
 		                .withValue(ContactsContract.CommonDataKinds.Event.START_DATE, contact.getBirthday())
 		                .withValue(ContactsContract.CommonDataKinds.Event.TYPE, ContactsContract.CommonDataKinds.Event.TYPE_BIRTHDAY)
-		                .build());				
+		                .build());
+					
+					Log.d("ConH", "Writing birthday: " + contact.getBirthday() + " for contact " + name);
+				}
 			}
 			
 			//phone
@@ -555,6 +576,7 @@ public class SyncContactsHandler extends AbstractSyncHandler
 								
 								if(typeIn == newType && numberIn.equals(newNumber))
 								{
+									Log.d("ConH", "SC: Found phone: " + numberIn + " for contact " + name + " -> wont add");
 									found = true;
 									break;
 								}
@@ -572,6 +594,7 @@ public class SyncContactsHandler extends AbstractSyncHandler
 				{
 					if(doMerge)
 					{
+						Log.d("ConH", "SC: No numbers in android for contact " + name + " -> adding all");
 						//we can add all new Numbers
 						for(ContactMethod cm : contact.getContactMethods())
 						{							
@@ -619,11 +642,12 @@ public class SyncContactsHandler extends AbstractSyncHandler
 							int newType = cm.getType();
 							
 							do {
-								String numberIn = phoneCursor.getString(mailCol);
-								int typeIn = phoneCursor.getInt(typeCol);
+								String emailIn = emailCursor.getString(mailCol);
+								int typeIn = emailCursor.getInt(typeCol);
 								
-								if(typeIn == newType && numberIn.equals(newMail))
+								if(typeIn == newType && emailIn.equals(newMail))
 								{
+									Log.d("ConH", "SC. Found email: " + emailIn + " for contact " + name + " -> wont add");
 									found = true;
 									break;
 								}
@@ -641,6 +665,7 @@ public class SyncContactsHandler extends AbstractSyncHandler
 				{
 					if(doMerge)
 					{
+						Log.d("ConH", "SC: No email in android for contact " + name + " -> adding all");
 						//we can add all new Numbers
 						for(ContactMethod cm : contact.getContactMethods())
 						{							
@@ -666,7 +691,9 @@ public class SyncContactsHandler extends AbstractSyncHandler
 			{
 				if(cm instanceof EmailContact)
 				{
-					email = cm.getData();					
+					email = cm.getData();
+					Log.d("ConH", "SC: Writing mail: " + email + " for contact " + name);
+					
 					ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
 			                .withValue(ContactsContract.Data.RAW_CONTACT_ID, contact.getId())
 			                .withValue(ContactsContract.Data.MIMETYPE,
@@ -678,6 +705,7 @@ public class SyncContactsHandler extends AbstractSyncHandler
 				if(cm instanceof PhoneContact)
 				{
 					phone = cm.getData();
+					Log.d("ConH", "Writing phone: " + phone + " for contact " + name);
 					
 					ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
 			                .withValue(ContactsContract.Data.RAW_CONTACT_ID, contact.getId())
@@ -687,8 +715,6 @@ public class SyncContactsHandler extends AbstractSyncHandler
 			                .withValue(ContactsContract.CommonDataKinds.Phone.TYPE, cm.getType())
 			                .build());
 				}
-				
-				Log.i("II", cm.toString() + cm.getClass());
 			}
 			
 			if (phoneCursor != null) phoneCursor.close();
@@ -707,6 +733,8 @@ public class SyncContactsHandler extends AbstractSyncHandler
             {
             	uri = ContentUris.withAppendedId(ContactsContract.RawContacts.CONTENT_URI, contact.getId());
             }
+            Log.d("ConH", "SC: Affected Uri was: " + uri);
+            
         } catch (Exception e) {	
             // Log exception
             Log.e("EE","Exception encountered while inserting contact: " + e.getMessage() + e.getStackTrace());

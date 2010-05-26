@@ -98,8 +98,11 @@ public class PhoneContact extends ContactMethod
 		if("business".equals(type)) setType(Contacts.Phones.TYPE_WORK);
 		if("mobile".equals(type)) setType(Contacts.Phones.TYPE_MOBILE);
 		*/
-		if(type.startsWith("home")) setType(ContactsContract.CommonDataKinds.Phone.TYPE_HOME);
-		if(type.startsWith("business")) setType(ContactsContract.CommonDataKinds.Phone.TYPE_WORK);
-		if(type.startsWith("mobile")) setType(ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE);
+		if(type != null)
+		{
+			if(type.startsWith("home")) setType(ContactsContract.CommonDataKinds.Phone.TYPE_HOME);
+			if(type.startsWith("business")) setType(ContactsContract.CommonDataKinds.Phone.TYPE_WORK);
+			if(type.startsWith("mobile")) setType(ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE);
+		}
 	}
 }
