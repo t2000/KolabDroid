@@ -35,6 +35,7 @@ public class CalendarProvider
 	public static final Uri			CALENDAR_URI	= Uri
 															.parse("content://calendar/events");
 	public static final Uri CALENDAR_ALERT_URI = Uri.parse("content://calendar/calendar_alerts");
+	public static final Uri CALENDAR_REMINDER_URI = Uri.parse("content://calendar/reminders");
 	public static final String		_ID				= "_id";
 
 	private static final String[]	projection		= new String[] { "_id",
@@ -112,7 +113,10 @@ public class CalendarProvider
 		if(e.getHasAlarm() == 1)
 		{
 			//for now, just use the reminder that is the farthest away from the appointment
-			Cursor alertCur = cr.query(CALENDAR_ALERT_URI, null, "event_id=?", new String[]{Integer.toString(e.getId())}, "minutes DSC");
+			//Cursor alertCur = cr.query(CALENDAR_ALERT_URI, null, "event_id=?", new String[]{Integer.toString(e.getId())}, "minutes DESC");
+			
+			//use reminder which include snoozed events (i.e. moving the alarm towards the future) 
+			Cursor alertCur = cr.query(CALENDAR_REMINDER_URI, null, "event_id=?", new String[]{Integer.toString(e.getId())}, "minutes DESC");
 			
 			if(alertCur.moveToFirst())
 			{
@@ -140,8 +144,8 @@ public class CalendarProvider
 		Uri uri = ContentUris.withAppendedId(CALENDAR_URI, id);
 		cr.delete(uri, null, null);
 		
-		//delete matching alerts		
-		cr.delete(CALENDAR_ALERT_URI, "event_id=?", new String[]{Integer.toString(id)});		
+		//delete matching alerts; trigger will do this for us		
+		//cr.delete(CALENDAR_ALERT_URI, "event_id=?", new String[]{Integer.toString(id)});		
 	}
 
 	public void save(CalendarEntry e)
@@ -191,6 +195,17 @@ public class CalendarProvider
 			//delete existing alerts to replace them with the ones from the synchronisation		
 			cr.delete(CALENDAR_ALERT_URI, "event_id=?", new String[]{Integer.toString(e.getId())});
 			
+			//remove reminder entry
+			cr.delete(CALENDAR_REMINDER_URI, "event_id=?", new String[]{Integer.toString(e.getId())});
+			
+			//create reminder
+			ContentValues reminderValues = new ContentValues();			
+			reminderValues.put("event_id", e.getId());
+			reminderValues.put("method", 1);			
+			reminderValues.put("minutes", e.getReminderTime());
+			
+			cr.insert(CALENDAR_REMINDER_URI, reminderValues);
+			
 			//create alert
 			ContentValues alertValues = new ContentValues();
 			
@@ -198,10 +213,11 @@ public class CalendarProvider
 			alertValues.put("begin", start);
 			alertValues.put("end", end);
 			alertValues.put("alarmTime", (start - e.getReminderTime()*60000));
+			alertValues.put("state", 0);
 			//alertValues.put("creationTime", value);
 			alertValues.put("minutes", e.getReminderTime());
 			
-			cr.insert(CALENDAR_ALERT_URI, alertValues);
+			cr.insert(CALENDAR_ALERT_URI, alertValues);			
 		}
 	}
 }
