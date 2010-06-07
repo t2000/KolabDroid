@@ -333,6 +333,19 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 				Utils.setXmlAttributeValue(xml, recurrence, "cycle", cycle
 						.toLowerCase());
 			}
+			
+			// /////////// Interval /////////////
+			result = regINTERVAL.matcher(rrule);
+			if (result.matches())
+			{
+				String f = result.group(1);
+				Utils.setXmlElementValue(xml, recurrence, "interval", f);
+			}
+			else
+			{
+				//TODO: kmail/kontact need this default value?
+				Utils.setXmlElementValue(xml, recurrence, "interval", "1");
+			}
 
 			// /////////// weekday recurrence /////////////
 			String daynumber = "";
@@ -417,15 +430,11 @@ public class SyncCalendarHandler extends AbstractSyncHandler
 			}
 			Utils.setXmlElementValue(xml, recurrence, "month", month);
 
-			// /////////// Interval /////////////
-			result = regINTERVAL.matcher(rrule);
-			if (result.matches())
-			{
-				String f = result.group(1);
-				Utils.setXmlElementValue(xml, recurrence, "interval", f);
-			}
-
 			// TODO: Android does not know until?
+			// we will use a "never-ending" event for now
+			
+			Element range = Utils.getOrCreateXmlElement(xml, recurrence, "range");
+			Utils.setXmlAttributeValue(xml, range, "type",	"none");			
 		}
 	}
 
